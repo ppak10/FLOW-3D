@@ -20,7 +20,6 @@ dependencies = [
     "numpy>=2.2.6",
     "pytest>=8.4.0",
     "scikit-image>=0.25.2",
-    "wandb>=0.20.1",
 ]
 
 [project.urls]
