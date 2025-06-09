@@ -5,15 +5,30 @@ build-backend = "hatchling.build"
 [project]
 name = "flow-3d"
 dynamic = ["version"] 
-description = ""
+description = "Python wrapper for FLOW-3D"
 readme = "README.md"
 authors = [
-	{ name = "Peter Pak", email = "ppak10@gmail.com" }
+  { name="Peter Pak", email="ppak10@gmail.com" },
 ]
 requires-python = ">=3.10"
 dependencies = [
+    "datasets>=3.6.0",
+    "f90nml>=1.4.5",
     "hatch>=1.14.1",
+    "huggingface-hub>=0.32.4",
+    "matplotlib>=3.10.3",
+    "numpy>=2.2.6",
+    "pytest>=8.4.0",
+    "scikit-image>=0.25.2",
+    "wandb>=0.20.1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/ppak10/FLOW-3D"
+Issues = "https://github.com/ppak10/FLOW-3D/issues"
+
+[project.scripts]
+flow-3d = "flow_3d.manage:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/flow_3d"]
