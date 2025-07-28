@@ -1,0 +1,101 @@
+:tocdepth: 3
+
+.. index:: utilities
+
+###################################
+Utilities
+###################################
+
+This chapter aims to describe some of the utilities available 
+in |prod|. The general purpose of the utilities is to help certain, not necessarily 
+essential, operations to be performed during the simulation setup or once the 
+simulation results are available. The use of each individual utility is described below:
+
+.. *****************************************************************
+.. include shared documentation (STL checkers)
+
+.. include:: ../shared/utilities/stl_checkers.rst
+
+.. *****************************************************************
+
+.. index:: Topo2STL
+   pair:  Utilities; File conversion
+
+.. _TopoReader:
+
+Topo2STL
+==========
+
+The only CAD file format supported by |prod| is :file:`.STL`, but it is not
+uncommon to have topographical data in other formats, including the
+:file:`topo` format.  The :program:`Topo2STL` utility can be used to convert
+:file:`topo` files into the required :file:`.STL` format.  
+:program:`Topo2STL` is only available for Windows machines and can be accessed
+from the :guilabel:`Utilities` drop-down menu.
+
+Instructions
+------------------
+
+1. A topography file is an ASCII file with the following format. Each line
+   represents a point and contains three coordinates in the same unit system
+   (typically feet or meters). The coordinates are separated by spaces. The order
+   of coordinates on a line must be X Y Z, where Z is elevation. Two coordinates
+   cannot share the same X Y point. The order of points (lines in the file) does
+   not matter. There should be no header lines or tailing lines that do not
+   contain coordinates.
+#. :program:`Topo2STL` can be accessed by running the :file:`Topo2stl.exe` file 
+   located located wherever the utility was extracted.
+#. Upon starting the utility, a :guilabel:`File Browse` window will appear prompting the 
+   user to select the :file:`topo` file to be converted. The :guilabel:`File browse` 
+   window does not filter out files based on extension, therefore the :file:`topo` 
+   file can have any extension.
+#. After a :file:`topo` file is selected, the :guilabel:`Topo2STL` window will appear 
+   and calculate the X, Y and Z extents of the :file:`topo` data.
+
+   .. image:: images/utilities/calculating-extents.*
+      :alt: Calculating extents
+
+#. Once the extents are calculated, information about the Topo Data extents and total 
+   number of points in the data is displayed under :guilabel:`Information: Topo data extents`.
+
+   .. image:: images/utilities/showing-extents.*
+      :alt: Showing extents
+
+#. User inputs required for the conversion are :guilabel:`Spatial resolution` and 
+   :guilabel:`STL minimum Z coordinate`. By default the :guilabel:`Spatial resolution` 
+   is 0.002*min (X extent, Y extent) and :guilabel:`STL minimum Z coordinate` is  
+   ZMIN - (ZMAX-ZMIN) where ZMIN and ZMAX are extents of the Topo data.
+
+   * :guilabel:`Spatial resolution` controls how finely the Topo data will be resolved while generating the STL file. 
+   * :guilabel:`STL minimum Z coordinate` should be a value less than ZMAX of the Topo data. This effectively sets the minimum Z thickness of the :file:`STL` file.
+
+#. The :guilabel:`Browse` button can be used to set the output (:file:`STL`) file location.
+
+#. Clicking on :guilabel:`Convert` will start the conversion process. At this point
+   the :guilabel:`Topo2STL` window cannot be closed until conversion is complete or 
+   terminated using :guilabel:`Cancel Conversion`.
+
+   .. image:: images/utilities/conversion-in-progress.*
+      :alt: Conversion in progress
+
+#. Once the conversion is completed (or terminated), the :guilabel:`Convert` 
+   button changes to :guilabel:`Convert more` allowing the user to select 
+   another Topo file for conversion.
+
+   .. image:: images/utilities/conversion-complete.*
+      :alt: Conversion complete
+
+.. *****************************************************************
+.. include remaining shared documentation (MPDB, etc.)
+
+.. include:: ../shared/utilities/other.rst
+
+.. *****************************************************************
+
+.. *****************************************************************
+.. include shared documentation (grfedit)
+
+
+.. include:: ../shared/utilities/grfedit.rst
+
+.. *****************************************************************

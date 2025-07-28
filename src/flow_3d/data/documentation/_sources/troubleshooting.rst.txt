@@ -1,0 +1,745 @@
+
+
+:tocdepth: 6
+
+.. index:: troubleshooting, diagnostic messages, The Mentor, stability, convergence
+
+.. index::
+   single: simulation; output
+
+###################################
+Troubleshooting
+###################################
+
+Troubleshooting a simulation always begins with reviewing and understanding
+the simulation output. In addition to looking at 2-D and 3-D plots of the data
+in the :file:`prpgrf.*` and :file:`flsgrf.*` files, the user should also
+carefully review the text output files from the preprocessor and the solver.
+These files contain many useful diagnostic measures and usually provide a more
+precise description of the problem than can easily be determined from the
+output plots. 
+
+The general procedure for diagnosing the cause of an issue with a simulation
+is as follows:    
+
+* Review the text diagnostic files for information about the problem. These
+  files usually identify what happened, the time it occurred, and where the
+  problem occurred.  The preprocessor outputs identify compatibility problems in
+  the setup, while the solver output files give information about issues that
+  may have occurred during the simulation.  
+* Review the spatial data in the area identified by the text output
+  for clues about what is causing the issue.
+* Using the detailed explanations of the different diagnostic 
+  messages (discussed below), develop and test theories about the cause of the error.
+  Give equal attention to physical scenarios as well as numerical causes.
+* For each hypothesis, determine an effective resolution based on the cause of the error.
+
+The following sections will describe the following topics in more detail:
+
+* The :ref:`PrpDiagnosticFiles`
+* The :ref:`Hd3DiagnosticFiles`
+* Instructions for correcting specific :ref:`preprocessorerrors`
+* Instructions for correcting specific :ref:`solvererrors`
+* :ref:`TheMentor` and an overview of how it can be used to improve simulations 
+* The meaning of the :ref:`StabilityCodes`
+
+.. index:: Preprocessor, diagnostic files
+
+.. _PrpDiagnosticFiles:
+
+======================================
+Preprocessor Diagnostic Files
+======================================
+
+Error and warning messages from the preprocessor are written into the files
+:file:`prperr.*` and :file:`prpout.*`. Both files are accessible through the
+GUI: :menuselection:`Diagnostics menu --> Preprocessor Errors` and
+:menuselection:`Diagnostics menu --> Preprocessor Summary`, respectively.  The
+preprocessor also creates a third file, :menuselection:`Report`
+(:file:`report.*`), that gives a concise summary of the mesh information,
+boundary conditions, and other mesh-related information.
+
+.. index:: Preprocessor, summary file
+
+.. _PrpoutFile:
+
+Preprocessor Summary File
+======================================
+
+The :guilabel:`Preprocessor Summary` file (:file:`prpout.*`) contains a
+complete listing of the model setup steps, including error and warning
+messages, variable values (including those not explicitly defined in the
+:file:`prepin.*` file), and diagnostics of open areas at mesh boundaries,
+solid volumes and surface areas, open volume and fluid volume in mesh (by
+region), and many more. The output is generally organized by
+namelist. It is recommended to :guilabel:`Search` the file
+for keywords and also scan the file for areas of interest, until a working
+familiarity with the :file:`prpout.*` file is developed.
+
+.. index:: Preprocessor, errors file
+
+.. _PrperrFile:
+
+Preprocessor Errors File
+======================================
+
+The :guilabel:`Preprocessor Errors` file (:file:`prperr.*`) contains a listing
+of only the error and warning messages reported by the preprocessor and will
+be empty if there are none to report.  This file gives the most concise output
+of any major issues that may have occurred during preprocessing.  However, an
+empty :file:`prperr.*` file does not guarantee that the input processed
+without issue, so reviewing both the preprocessor results and the
+:file:`prpout.*` file is recommended.  More detail about specific preprocessor
+warnings and errors is given in the :ref:`preprocessorerrors` section.
+
+.. index:: solver diagnostic files
+
+.. _Hd3DiagnosticFiles:
+
+======================================
+Solver Diagnostic Files
+======================================
+
+The solver creates four text output files that are accessible from the
+:menuselection:`Diagnostics menu`. They are:
+
+* :menuselection:`Report` (:file:`report.*`):  This file is originally 
+  created by the preprocessor but it is later modified by the solver to 
+  include the data output times.
+* :menuselection:`Solver Errors` (:file:`hd3err.*`):  A listing of any 
+  errors and warnings encountered by the solver.
+* :menuselection:`Solver Messages` (:file:`hd3msg.*`):  The main text 
+  output file containing information about how the solver is running.
+* :menuselection:`Solver Summary` (:file:`hd3out.*`):  Detailed text 
+  information about the simulation (the short print and long print data).
+
+.. index:: solver message file
+
+.. _Hd3msgFile:
+
+Solver Messages File
+======================================
+
+The :file:`hd3msg.*` file is a concise description of the progress
+of the solution. It contains the same information reported in the :ref:`sim_manager_solver_messages` of the
+:ref:`Sim_manager` tab when the :menuselection:`Preferences-->Show Simulation Information in Simulation Manager` is active. 
+The main output reported in the :guilabel:`Solver Messages` file:
+
+* The solver version number, e.g. |prodv|
+* The version ID of the solver.  The default solver is listed as ``double`` and a customized solver is listed as ``prehyd``.
+* Simulation start date and time
+* The number of processors used
+* Restart output times (in simulation time)
+* :guilabel:`Short print` summary data.
+
+.. only:: html
+
+   An example of the :guilabel:`Short print` summary output in the :file:`hd3msg.*` file is shown below::
+
+     --------------------   ---------------------   ---------------   ---------------   ---------------   ---------------------------   ----------------      -------------------------------------
+            progress               time step            pressure        heat transfer          FEA                  fluid #1              solidification                  performance              
+       sim_time     cycle     delt   dt_stbl/code    iter  res/epsi    iter  res/epsi    iter  res/epsi     volume      %loss    frac     volume    frac      el_time  %PE   clk_time  est_rem_time
+     --------------------   ---------------------   ---------------   ---------------   ---------------   ---------------------------   ----------------      -------------------------------------
+     0.00000E+00        0   5.07E-01  5.07E-01/vs       0  0.00E+00       0  0.00E+00       0  0.00E+00   5.9025E+02  +0.00E+00  1.00   5.3417E+02  0.90      00:00:04   22  12:04:43           ...
+     2.54953E+00        5   5.11E-01  5.11E-01/vs       0  0.00E+00       5  8.95E-01       0  0.00E+00   5.9025E+02  +0.00E+00  1.00   5.6613E+02  0.96      00:00:05  100  12:04:43      00:01:25
+     5.10535E+00       10   5.11E-01  5.11E-01/vs       0  0.00E+00       5  8.73E-01       1  4.81E-05   5.9025E+02  +0.00E+00  1.00   5.7937E+02  0.98      00:00:06   98  12:04:45      00:01:33
+
+.. only:: latex
+
+   An example of the :guilabel:`Short print` summary output in the :file:`hd3msg.*` file is shown below::
+
+     --------------------   ---------------------   ---------------   ---------------------------   -------------------------------------
+            progress               time step            pressure                fluid #1                         performance              
+       sim_time     cycle     delt   dt_stbl/code    iter  res/epsi     volume      %loss    frac   el_time   %PE  clk_time  est_rem_time
+     --------------------   ---------------------   ---------------   ---------------------------   -------------------------------------
+     0.00000E+00        0   5.07E-01  5.07E-01/vs       0  0.00E+00   5.9025E+02  +0.00E+00  1.00   00:00:04   22  12:04:43           ...
+     2.54953E+00        5   5.11E-01  5.11E-01/vs       0  0.00E+00   5.9025E+02  +0.00E+00  1.00   00:00:05  100  12:04:43      00:01:25
+     5.10535E+00       10   5.11E-01  5.11E-01/vs       0  0.00E+00   5.9025E+02  +0.00E+00  1.00   00:00:06   98  12:04:45      00:01:33      
+
+The diagnostic quantities reported in the :guilabel:`Short print` summary outputs are:
+
+* ``sim_time`` = The time in the simulation corresponding to the current cycle (time step).
+* ``cycle`` = The number of time steps elapsed to reported time (the initial conditions correspond to cycle 0).
+* ``delt`` = The actual time step used in the reported cycle.  
+* ``dtstbl/code`` = The maximum time step permissible for the reported cycle, as determined by the stability criteria of the solver process
+  identified by a two-letter abbreviation. See :ref:`StabilityCodes` for the interpretation.
+* ``iter`` = The number of iterations required for a particular implicit solver to converge at the reported cycle.
+* ``res/epsi`` = The ratio of the maximum residual in an implicit solver to the specified convergence criterion. The 
+  solution is considered converged when this ratio is less than one.  For more detail about implicit methods in the context of the pressure solver, see the
+  :ref:`PressureSolutionAlgorithmTh` section.
+* ``volume`` = When associated with the ``fluid #1`` section this is the volume of fluid #1 in the domain at the reported cycle.  
+  When it is associated with the ``solidification`` label then it is the volume of solidified fluid #1 in the domain.
+* ``% loss`` = The cumulative fluid fraction error expressed as a percent of the volume of fluid #1 in the domain at the reported cycle.
+* ``frac`` = When listed in the ``fluid #1`` section this output is the fill fraction (the ratio of the volume of fluid #1 in the domain relative to the open volume in the domain).
+  When it is listed in the ``solidification`` section then it represents the solid fraction (the ratio of solidified fluid #1 volume to the total fluid #1 volume).
+* ``el_time`` = The time that has elapsed since the solver started, including the time required
+  to preprocess the simulation. The time during which simulation is paused is not included.
+* ``%PE`` = The parallel efficiency of the solver.  This is a measure of how effective the parallelization scheme is for a particular problem.
+* ``clk_time`` = The wall clock time at which the reported cycle occurred.
+* ``est_rem_time`` = The estimated clock time before the simulation completes.  The format is ``dd:hh:mm:ss``.
+
+
+.. note::
+   * The time step size, :guilabel:`delt`, may be smaller than :guilabel:`dtstbl`
+     for various reasons: the number of pressure iterations can reduce the time
+     step in certain settings, it may be limited by a user-specified
+     :guilabel:`Maximum time step`, or the previous time step may   have been small
+     (in which case the maximum increase between time steps is limited to 5%).
+   * The :guilabel:`iter` and :guilabel:`res/epsi` values will be listed for each active iterative implicit solver.  
+
+.. index:: solver summary file
+
+.. _Hd3outFile:
+
+Solver Summary File
+======================================
+
+The :file:`hd3out.*` file is a more detailed listing of various quantities,
+included :guilabel:`long print` data and an expanded version of the :guilabel:`short print` data.  The
+:guilabel:`short print` data in this file includes much of the same information reported
+in the :file:`hd3msg.*` file, but it also includes detail about each of the
+stability limits associated with numerical approximations used in the various
+physical models.  This information can be used to determine whether an
+implicit solver will provide an increased time-step size or whether another
+phenomena will limit the time-step size.  The :guilabel:`long print` data primarily
+presents information about the different void regions and bulk flow
+quantities.  When reading the void information, the primary variables of
+interest are reported as:
+
+* ``vol(l)``:  the void volume
+* ``pr(l)``:  the void pressure
+* ``tvr(l)``:  the void temperature
+* ``area(l)``:  the void surface area
+
+When a problem occurs during the simulation, a brief message is written into the
+solver message file and more descriptive information is written into the
+solver summary and solver error files. 
+
+.. index:: solver errors file
+
+.. _Hd3errFile:
+
+Solver Errors File
+======================================
+
+The :file:`hd3err.*` file contains a brief listing of solver errors, the cell
+or cells where they occurred, and the time at which they occurred.  Specific
+warnings and errors are discussed below in the :ref:`solvererrors` section.
+
+
+.. index:: errors, warnings, message files
+
+.. _preprocessorerrors:
+
+==================================
+Preprocessor Warnings and Errors
+==================================
+
+This section includes descriptions of the most common diagnostic messages
+produced by the |prod| preprocessor and the files in which they appear. It also includes
+suggestions for addressing common warnings and errors. Some of the warning
+messages listed below are repeated in multiple files; below they are described
+only in the primary file in which they appear. As mentioned above, it is good
+practice to review all of the output files for warnings, errors, or unusual
+results for every simulation.
+
+.. index:: open area mismatch
+
+.. _OpenAreaMismatch:
+
+Message: "Open area mismatch at inter-block boundaries of all blocks as % of total open area at these mesh boundaries = X"
+========================================================================================================================================
+
+**Status**: Informative
+
+**Explanation**: The preprocessor calculates the open area in each interfacing
+mesh block at the inter-block  boundaries. If both the mesh blocks do not have
+the same cell size then the computed open area in each mesh block may be
+different, leading to different open areas for each mesh block at the same
+location. This difference in the resolved open area at an inter-block boundary
+is reported in the :file:`prpmsg.*` file as a percentage of the total open area
+at that boundary.  The mismatched open areas at the inter-block boundary will
+affect continuity somewhat, since the velocity is maintained at the 
+inter-block boundary.
+
+**Suggested Actions**: None needed. A similar warning will be written to the
+:file:`prperr.*` file for specific inter-block boundaries if the open area
+mismatch exceeds 5%. See the suggested actions described below to address
+open area mismatch issues.
+
+.. _OpenAreasBetweenBlocksDiffer:
+
+Message: "Open areas between blocks B1, B2 differ by more than 5% area, diff = X percent. Try improving resolution or reduce the number of blocks." 
+==========================================================================================================================================================================
+
+**Status**: Warning
+
+**Explanation**: The difference between the calculated open areas at an inter-block 
+boundary differs by more than 5% of the total open area at the inter-block
+boundary, as discussed above in :ref:`OpenAreaMismatch`.  
+
+**Suggested Actions**: This may be ignored in some cases but, if the open area
+mismatch significantly impacts the accuracy of the results or causes the
+pressure solver to have difficulty converging, then try the following steps:
+
+* Make sure that grid lines match between the blocks.
+* Consider using a smaller cell size ratio between the blocks. The most
+  accurate cell size ratio is 1:1, while 2:1 is a guideline for the upper limit.
+* Consider moving the inter-block boundary to a location where the geometry has
+  smaller gradients (relatively flat slope, little expansion or
+  contraction, etc.)
+* Consider using :guilabel:`Mesh Planes` to fix grid lines that resolve the
+  surface of the solid(s) involved in the mismatch.
+
+.. _NoOpenAreaAtBoundary:
+
+Warning: "No open area at B boundary"
+==========================================================================================================================================================================
+
+**Status**: Warning
+
+**Explanation**: The boundary condition is set to a flow-transmitting type
+(all types except :guilabel:`Wall` or :guilabel:`Symmetry`), but the
+preprocessor computes that the boundary is entirely blocked by solid material
+after :guilabel:`FAVORizing` the geometry.
+
+**Suggested Actions**:
+
+* Check the geometry to see if there is any obvious obstruction to the
+  boundary. The preprocessor results file :file:`prpgrf.*` can be used for this
+  purpose. Look for both solid geometry as well as solid baffles (porosity = 0).
+* When using a hole-type subcomponent to create an opening through
+  a solid subcomponent at the boundary, the dimensions of the hole should extend beyond the boundary. For
+  example, if the hole is cut in the X Min boundary then it should be extended at
+  least 2 cells in the negative x-direction. This is because |prod| creates extra
+  layers of cells beyond the boundary, called "ghost cells" that are used to
+  apply the boundary conditions. The hole should extend through these ghost cells in
+  order for the boundary condition to be imposed.
+* If there should not be any open area at the boundary then consider changing the
+  boundary condition to a type that does not give the above message (:guilabel:`Symmetry` or :guilabel:`Wall`).
+
+.. _solvererrors:
+
+===============================
+Solver Warnings and Errors
+===============================
+
+This section includes descriptions of the most common diagnostic messages
+produced by the |prod| solver and the files in which they appear. It also includes
+suggestions for addressing common warnings and errors. Some of the warning
+messages listed below are repeated in multiple files; below they are described
+only in the primary file in which they appear. As mentioned above, it is good
+practice to review all of the output files for warnings, errors, or unusual
+results for every simulation.
+
+.. _ConvectiveFluxExceededStabilityLimit:
+
+Message: "Convective flux exceeded stability limit"
+==========================================================================================================================================================================
+
+**Status**: Warning
+
+**Explanation**: The computed fluid velocity resulted in a Courant number
+larger than one, exceeding the stability limit at the end of the reported
+cycle. This occurs when fluid undergoes a large acceleration during the cycle
+as can happen, for example, when a fluid jet strikes a wall. |prod|
+corrects for this by backing up and repeating the computational cycle with a
+smaller time-step size.  As such, there is no loss of accuracy resulting from
+this issue. After reducing the time step, the calculation usually progresses
+without difficulty.
+
+**Suggested Actions**: If this issue occurs repeatedly:
+
+* If the warning occurs near the initial time, consider setting a smaller
+  initial time-step size.  This will reduce the Courant number and help the
+  solution satisfy the stability criterion.
+* Consider setting a value for the fluid compressibility.  This allows fluid #1 to compress 
+  and expand slightly, allowing it to respond more gradually to sudden impacts with solid objects.
+* Verify that the pressure solver convergence criterion is sufficiently small
+  for the problem. Consider reducing the value of
+  the :menuselection:`Constant convergence criteria` (:envvar:`EPSI`), if used, or
+  the :menuselection:`Multiplier for dynamically adjusted convergence criteria`
+  (:envvar:`EPSADJ`) in the pressure solver :guilabel:`Convergence controls`.
+* Check the boundary and initial conditions for any physical
+  inconsistencies. 
+* Make sure that :menuselection:`FAVOR Stability Adjustment` (:envvar:`IAVRCK` = 1)
+  in time step :guilabel:`Stability factors` is activated and that
+  :menuselection:`Minimum area/volume ratio` (:envvar:`AVRCK`) is set to a negative
+  value since this adjustment helps moderate the convective stability limit for sliver cells.
+* Consider improving the mesh aspect ratio. Multiple convective failures may
+  happen in cells with large aspect ratios, especially in flows that involve free
+  surfaces.
+* Consider improving the mesh resolution. Multiple convective failures may happen in poorly 
+  resolved flows, especially where free surfaces are present. 
+
+.. _ExcessiveConvectionFailures:
+
+Message: "Excessive convection failures - calculation terminated"
+==========================================================================================================================================================================
+
+**Status**: Fatal
+
+**Explanation**: The solver failed to meet the convection stability criteria
+in too many consecutive cycles. The maximum allowable number of consecutive
+convection or pressure convergence failures is set by variable :envvar:`NCFLMX`.
+
+**Suggested Actions**: 
+
+* Check the individual failure messages prior to the
+  termination to determine the location and direction of the convective
+  failures.
+* See :ref:`ConvectiveFluxExceededStabilityLimit`.
+* Changing the maximum number of convective failures (:envvar:`NCFLMX`) is not
+  recommended, but if necessary, it can be set manually in the
+  :file:`prepin.*` file under namelist :envvar:`LIMITS`.
+
+.. _PressureIterationFailure:
+
+Message: "Pressure iteration did not converge in ITMAX = IMAX iterations"
+==========================================================================================================================================================================
+
+**Status**: Warning
+
+**Explanation**: The pressure solver could not reduce the maximum continuity
+residual to below the specified convergence criterion in the maximum allowable
+number of iterations.
+
+Depending on the situation, the solver will take one of two actions:
+
+#. If the maximum residual is greater than twice the value
+   of the convergence criterion, :guilabel:`epsi`, then the cycle is restarted
+   with the time-step size reduced by a factor of two. If the maximum pressure
+   solution residual is still larger than twice the value of :guilabel:`epsi`
+   or if the new residual is less than 90% of the previous residual then the
+   time step is halved again and the cycle is restarted. After three
+   consecutive attempts the solver will proceed with the not-converged solution.
+   Three cycle restarts will result in the time step being reduced by a factor
+   of eight which is usually sufficient for the solution to recover from a
+   difficult situation.
+
+#. When the maximum residual is less than 2 x :guilabel:`epsi`, then no cycle restart is performed; the
+   simulation proceeds to the next time step.
+
+If, in either case, the residual is greater than 2 x :guilabel:`epsi` after :envvar:`ITMAX` iterations then
+the convergence failure counter :envvar:`NOCON` is incremented by one.
+
+**Suggested Actions**:
+
+* Multiple warnings at the beginning of a simulation usually indicate inconsistencies
+  within (or between) the initial and boundary conditions.  This can also be caused by an issue with how 
+  the geometry is resolved by the mesh. The following steps can be used to diagnose and resolve the problem:
+
+  * Check that boundary conditions are correct, reasonable, and consistent at the edges of the domain.
+  * Check that the initial fluid velocities, pressures, and locations are consistent and physical.
+  * Check that any initial conditions contacting the boundary conditions are consistent with the boundary conditions.
+  * Check that mesh aspect ratios are reasonable: <3:1 side ratio in
+    individual cells, <1.25:1 length ratio between neighboring cells, and 2:1 or 1:1
+    ratios between neighboring mesh blocks.
+  * Check that neighboring mesh block grid lines align.
+  * Check the resolution of geometry, using 2-D plots if necessary, to
+    examine the accuracy of the geometry given the current mesh and geometry
+    definitions. Make sure that there are no narrow gaps (less than 1 full cell)
+    in or between objects.
+  * Check all :file:`*.stl` files using :ref:`qAdMesh` for inverted normals, disconnected edges, and missing facets. Fix
+    files if necessary.
+  * If splashing on a solid surface is occurring at the simulation start, consider
+    initializing fluid in a way that minimizes splashing. 
+  * Consider setting the :menuselection:`Initial time step`
+    (:envvar:`DELT`) to a smaller value to reduce the difference between the 
+    current solution and the new solution.
+
+* Convergence problems at other times during the simulation usually indicate
+  that the flow field is undergoing a substantial change in a short period of
+  time (e.g., a collapsing bubble, a suddenly moving GMO, or a change in a time-dependent
+  boundary condition). To diagnose and resolve iteration failures during a simulation, try the following:
+
+  * Compare the convergence criterion (:guilabel:`epsi`) and the maximum residual (:guilabel:`resid`). If
+    these values are close then one may often proceed without significant loss in accuracy.  Alternatively, 
+    reducing the time-step size (by setting a maximum time-step size) or some 
+    adjustments to the pressure solver settings can often remedy the issue:
+
+    * increasing the GMRES subspace size (:envvar:`MRSTRT`) 
+    * increasing the maximum allowed number of pressure iterations :envvar:`ITMAX`
+    * increasing the convergence criterion by increasing the value of :envvar:`EPSADJ`
+
+  * More extensive efforts are required to resolve the problem if the maximum residual is 
+    significantly larger than the convergence criterion.
+
+    * Study the solution near the cell where the failure occurs at times near when the 
+      failure occurs in an attempt to identify the cause. Many times, sudden changes in the 
+      flow field (bubble collapsing, fluid impacting a wall, etc.) will cause convergence 
+      troubles, as will poorly resolved, high-pressure bubbles.  Most causes that fall into 
+      this category are best resolved by decreasing the time-step size or by adding some fluid 
+      compressibility.
+    * Study the overall simulation setup for anything that suddenly changes near the time of the 
+      convergence failure (e.g., a source turns on, a GMO begins to move, a boundary condition changes, etc.).  
+      Most causes that are related to the general setup can be resolved by decreasing the time-step size or
+      by making the change more gradual.
+    * Look for cells where there is a very small volume open to flow but a large open area.  These can occur near
+      walls or be the result of a large cell aspect ratio.  Regardless of the origin, these sliver cells are problematic
+      because a small change in the velocity on the large face tends to create large velocities on the other faces
+      to maintain continuity.  This sensitivity to small changes in the velocity makes it difficult
+      for the pressure solver to find a solution.  Locate these cells in the :ref:`PrpoutFile`, :file:`prpout.*`.
+      These can be addressed in many cases by setting the |FAVOR| factor
+      :menuselection:`Minimum area/volume ratio` (:envvar:`AVRCK`) in the time step
+      :guilabel:`Stability factors` to a negative number of lower magnitude (e.g., -2) or by increasing the 
+      :menuselection:`FAVOR tolerance` (:envvar:`EPS` = 0.01 under time step :guilabel:`Stability
+      factors`).
+    * Check all :file:`*.stl` files using :ref:`qAdmesh` for inverted normals, disconnected edges, and missing facets. Fix
+      files if necessary.
+    * Check the :guilabel:`FAVORized` geometry for adequate resolution.  If the geometry is not
+      sufficiently well-resolved then the solver can interpret regions as having small holes or other 
+      anomalous features.  This can usually be resolved by reducing the cell size.
+
+.. index:: iteration failures
+
+.. _ExcessiveIterationFailures:
+
+Message: "Excessive pressure iteration failures - calculation terminated"
+==========================================================================================================================================================================
+
+**Status**: Fatal
+
+**Explanation**: The pressure solver failed to converge in :envvar:`ITMAX`
+iterations for too many consecutive cycles.  The threshold number of iteration
+failures value is set by :menuselection:`Maximum number of iteration failures
+allowed` (:envvar:`ITFLMX`) in the pressure solver :guilabel:`Convergence
+Controls`. This error usually indicates a setup problem.
+
+**Suggested Actions**: See :ref:`PressureIterationFailure`. Increasing
+:envvar:`ITFLMX` is not recommended.
+
+.. _PressureIterationDiverging:
+
+Message: "Pressure iteration diverging - restarting cycle with smaller omega and time-step size"
+==========================================================================================================================================================================
+
+**Status**: Warning
+
+**Explanation**: The pressure solver is diverging (the residual is increasing with each iteration). The solver detects this situation 
+and tries to recover by reducing the relaxation factor and then restarting the cycle.
+
+**Suggested Actions**: Usually no action is required, though this is not always true when using the 
+GMRES pressure solver.  In this case, it may be necessary to increase the GMRES subspace size to 
+increase the radius of convergence for the solver.
+
+.. index:: pressure convergence
+
+.. _ExcessivePressureConvergenceFailures:
+
+
+Message: "Excessive diverging pressure solver failures - calculation terminated"
+==========================================================================================================================================================================
+
+**Status**: Fatal
+
+**Explanation**: The solver aborts because the solver was diverging on too many cycles. 
+The maximum allowable number of consecutive convection failures or
+divergence failures is set by variable :envvar:`NCFLMX`.
+Consecutive divergence failures in the pressure solver usually indicate that the solution is
+becoming unstable.
+
+**Suggested Actions**:
+
+* Follow the steps in :ref:`PressureIterationDiverging`.
+* The steps in :ref:`PressureIterationFailure` provide a good follow-up approach should the 
+  the steps in :ref:`PressureIterationDiverging` not resolve the problem.
+* Consider changing the maximum number of consecutive over-relaxation pressure failures
+  (:envvar:`NCFLMX`) is not recommended, but if necessary, it can be set
+  manually in the :file:`prepin.*` file under namelist :envvar:`LIMITS`.
+
+.. index:: time-step size
+
+.. _TimeStepSizeDTMIN:
+
+Message: "Time-step size < dtmin"
+==========================================================================================================================================================================
+
+**Status**: Fatal
+
+**Explanation**: The time-step size fell below the user-specified
+:menuselection:`Minimum time step` (:envvar:`DTMIN`) and the solver aborted. 
+The :menuselection:`Minimum time step` defaults to 1.E-5 times the
+:menuselection:`Initial time-step size` (:envvar:`DELT`), and can be 
+specified on the :guilabel:`Numerics` tab.
+
+**Suggested Actions**: 
+
+The first step is always to identify why the time step is smaller than the 
+user-specified minimum time-step size.  There are three possible reasons why this might be:
+  
+#. The smallest stability limit is smaller than the user-specified value for
+   the minimum time-step size. The solver will output the code (see :ref:`StabilityCodes`) and time step
+   size associated with the smallest stability limit in the :file:`hd3msg.*` and
+   :file:`hd3out.*` files, so these should be compared to hand calculations
+   based on the expected values for the parameters (velocity, etc.) using the 
+   equations described in :ref:`StabilityConsiderationsTh`.
+  
+   * If the estimated smallest stability limit from |prod| and the hand calculation are close, then it is likely that
+     the minimum time-step size :envvar:`DTMIN` is simply too small.  This can occur if the finish time is a large
+     number and :envvar:`DTMIN` was not defined since the default value for :envvar:`DTMIN` is 1.0E-06 times
+     the simulation finish time (:envvar:`TWFIN`). Alternatively, consider switching the limiting solution process 
+     (determined by the :ref:`StabilityCodes`) to use an implicit solver to eliminate the stability limit associated 
+     with this process.
+   * If the estimated smallest stability limit from |prod| and the hand calculation are notably different, then
+     one of the parameters in |prod| is most likely incorrect.  In this case, check the input for any 
+     typographical errors and inconsistencies, particularly in the initial and boundary conditions.  Also,
+     watch for parameters that change suddenly (sources turning on, etc.), and rapidly changing flow conditions.
+     Reviewing the solver output is often helpful in identifying the problem.
+   
+#. The number of iterations in the implicit pressure solver, heat transfer solver, or elastic 
+   stress solver is larger than the :menuselection:`Maximum number of iterations before time step is reduced`.
+
+   * An implicit solver that is iterating enough to reduce the time-step size below the
+     minimum time-step size usually indicates an issue with the setup.  Diagnosing the cause of the slow convergence
+     generally follows the discussion in :ref:`PressureIterationFailure`.
+   * If the setup is known to be correct, then a resolution is to set the solver to not reduce the time step.  
+     This is done by setting the option :menuselection:`Model Setup-->Numerics-->Time Step controls-->Advanced Options-->Time-step controlled by`
+     to be "stability".  Alternatively, increasing the :menuselection:`Maximum number of iterations before time step is reduced`
+     will reduce the impact of this adjustment.
+   
+#. The cycle is being restarted with a reduced time-step size because of a convective flux error
+   (see :ref:`ConvectiveFluxExceededStabilityLimit`), the pressure solver did not converge 
+   (see :ref:`PressureIterationFailure`), the pressure solver is diverging (see :ref:`PressureIterationDiverging`).
+   In this case, diagnose the cause of the original problem (e.g., the convective flux error) following the discussion
+   on that particular topic.   
+
+.. index:: excessive deformations
+
+.. _ExcessiveDeformations:
+
+Message: "Elements not viable due to large deformations. Ensure material properties are correct."
+==========================================================================================================================================================================
+
+**Status**: Warning
+
+**Explanation**: The Finite Element Analysis (FEA) solver has detected excessive deformations which could potentially cause it to breakdown. The 
+FEA model can only be used to solve for small deformations.
+
+**Suggested Actions**: The material properties (like Young's modulus, Poisson ratio etc.) needs to be checked to make sure the correct values have been entered.
+
+
+.. index:: Mentor
+
+.. _TheMentor:
+
+======================
+The Mentor
+======================
+
+The :guilabel:`Mentor` is a run-time diagnostic feature that monitors the
+progress of the solution and advises users of ways in which the solution
+efficiency may be improved. A simple fuzzy logic is used by the
+:guilabel:`Mentor` to sense when certain patterns occur in the solution
+process. The patterns are provided by the solver during simulation, so the
+:guilabel:`Mentor` requires very little overhead. When the :guilabel:`Mentor`
+detects a situation that may be improved with a change in one or more
+parameters, it informs the user with a message titled: :guilabel:`Mentor Tip`.
+These messages appear in the solver window of the GUI, as well as in the
+:ref:`hd3msgFile` and :ref:`hd3errFile`.
+
+:guilabel:`Mentor Tips` may consist of a single suggestion or a set of several
+suggestions. The recommendations are not automatically implemented, it is left
+to the user to act upon the suggestions or ignore them based on their
+discretion. 
+
+The :guilabel:`Mentor` is controlled by the :menuselection:`Mentor options`
+in the :menuselection:`Model Setup --> Output` widget.
+
+.. index:: stability codes
+
+.. _StabilityCodes:
+
+==========================================
+Stability Codes
+==========================================
+
+These codes are listed after the stability time-step limit in the :ref:`sim_manager_solver_messages` of the 
+:ref:`Sim_manager` tab. The same information can also be found in the the :ref:`Hd3msgFile` and :ref:`Hd3outFile`,
+:file:`hd3msg` and :file:`hd3out`, respectively.
+
+The stability codes used by the solver are listed below. They indicate which
+physical model is controlling the size of the time step. A limit on the
+maximum size of the time step is typically required to maintain accuracy of
+the solution. See the :doc:`theory` chapter, :ref:`StabilityConsiderationsTh`
+section for a detailed explanation on how stability criteria are calculated.
+
+.. tabularcolumns:: |p{1.5cm}|p{5.0cm}|
+
+.. list-table::
+   :widths: 10 90
+   :header-rows: 1
+   :class: longtable
+
+   * - CODE
+     - DESCRIPTION
+
+   * - cd
+     - Thermal conduction in fluid and in solid components 
+
+   * - cr
+     - Coriolis force terms in the fluid momentum equations, used by the non-inertial reference frame model 
+
+   * - cx 
+     - Explicit fluid convection in the x-direction
+
+   * - cy
+     - Explicit fluid convection in the y-direction
+
+   * - cz
+     - Explicit fluid convection in the z-direction
+
+   * - sx
+     - Implicit fluid convection in the x-direction, defined by the motion of the free surface
+
+   * - sy
+     - Implicit fluid convection in the y-direction, defined by the motion of the free surface
+
+   * - sz
+     - Implicit fluid convection in the z-direction, defined by the motion of the free surface 
+
+   * - df
+     - Mass fluxes computed in the drift-flux model
+
+   * - es
+     - Elastic stress model
+
+   * - fd
+     - Diffusion of two fluids, used in two-fluid flows without sharp interfaces 
+
+   * - fs
+     - Gravity waves on the free surface 
+
+   * - ht
+     - Heat transfer between fluid, walls, and voids 
+
+   * - pr
+     - Particle transport model
+
+   * - pd
+     - Particle diffusion model
+
+   * - rb
+     - Used to maintain stability of the coupling of the fluid flow and rigid body motion, used by the rigid body dynamics model 
+
+   * - sc
+     - Scalar diffusion
+
+   * - sp
+     - Wave-absorbing layer model
+
+   * - ss
+     - Sediment scour model
+
+   * - st
+     - Used to maintain stability of the capillary waves in the surface tension model
+
+   * - td
+     - turbulent diffusion of scalar quantities such as density or energy
+
+   * - vs
+     - Viscous diffusion of momentum
+
+   * - na
+     - None of the above limits apply
+

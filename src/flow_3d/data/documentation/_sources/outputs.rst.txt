@@ -1,0 +1,508 @@
+
+
+:tocdepth: 6
+
+.. index::  outputs
+   single: variables; output
+
+
+###################################
+Output variables
+###################################
+
+
+The exact outputs of a given simulation depend on which physical models are
+enabled, the :guilabel:`Additional outputs` defined on the :ref:`dataOutput`
+widget, and certain component-specific outputs This chapter serves as a reference of 
+some of the more complex output variables.
+
+
+.. index::
+   single: output; additional output
+   single: additional output
+
+.. _additionaloutput:
+
+========================================================
+Additional output
+========================================================
+
+  .. image:: images/model-setup/ModelSetup_Output_Distancetraveled_v12.*
+     :scale: 66%
+     :alt: Distance traveled by fluid
+
+.. index::
+   single: outputs; distance traveled by fluid
+
+.. index:: distance traveled by fluid
+
+.. _distanceTraveledByFluidOut:
+
+
+Distance Traveled by Fluid
+========================================================
+
+Sometimes, the distance that a fluid particle has traveled
+is important to know.  In |prod|, the user can request output for the distance traveled by
+fluid on the :menuselection:`Model Setup --> Output` widget. 
+The feature computes the initial time or from the time at which the
+fluid enters the flow domain (either through boundaries or mass sources), the
+distance that a volume of fluid has traveled through the domain.
+This feature can be used with any simulation, and does not require any special
+models to be used, nor does it affect the flow.
+To use this model, navigate to the :guilabel:`Output` widget, and within the
+:guilabel:`Additional output` section, check the box next to :guilabel:`Distance
+traveled by fluid`.
+
+.. note:: The :guilabel:`Additional output` section is available on all tabs of the :guilabel:`Output` widget.
+
+
+.. index::
+   single: outputs; fluid arrival time
+   
+.. _fillingTimesOut:
+
+
+Fluid arrival time
+========================================================
+
+It is often useful to know the fluid arrival time; for example, in casting
+simulations it can be used to determine the filling time. Because a control
+volume fills and then empties many times during a filling process both the
+first and the last times a computational cell is filled can be recorded and
+stored for post-processing. This is done in the :guilabel:`Output` widget, and within the
+:guilabel:`Additional output` section by checking the :guilabel:`Fluid arrival time` check box.
+
+.. note:: This output option is only available for one-fluid, free-surface flows.
+
+.. index::
+   single: outputs; fluid residence time
+   
+.. _residence_time_Out:
+
+
+Fluid residence time
+========================================================
+
+It is sometimes useful to know the time that fluid spends within the
+computational domain -- the *Residence Time*.  This is done by selecting the
+:menuselection:`Output --> Additional Output --> Fluid residence time` check box.
+A transport equation is solved for this variable, designated here
+as :math:`S`, with a unit source term:
+
+.. math:: \partial S/\partial t + \mathbf{u} \cdot \nabla S = 1
+
+where :math:`t` is time, and :math:`\mathbf{u}` is the fluid velocity.
+
+The units of :math:`S` are time. The initial value of :math:`S` for any fluid
+entering the computational domain is zero. The value of :math:`\mathbf{u}
+\cdot \nabla S` is always approximated from the data with a second-order
+accurate scheme.
+
+This output option is available for both one- and two-fluid flows.
+
+.. note::  The residence can appear to decrease when fluid entering the domain from
+   a boundary condition or source mixes with fluid that was already in the
+   domain.
+
+
+.. index:: 
+   single: outputs; Wall Contact Time
+
+.. _wallcontactOut:
+
+
+Wall Contact Time
+========================================
+
+The :guilabel:`Wall Contact Time` output tracks (1) how long an individual
+fluid element is in contact with a specified component and (2) how long a
+specified component is in contact with the fluid.   The model is intended to
+provide a proxy variable that is correlated to the  contamination of liquid
+metal when it is in contact with a sand mold.   This output can then be used
+to see where the contaminated fluid will reside  in the final casting. Another
+interpretation of the contact time model is the contamination of water in a
+river by a submerged object that emits, for example, through dissolution, of a
+chemical at a more or less constant rate.
+
+The model is enabled by checking the :menuselection:`Model Setup --> Output --> Wall contact time` box. Additionally, there is
+a :guilabel:`Contact time` flag that must be set for each component in
+the :menuselection:`Model Setup --> Output --> Geometry Data` section in order for that component to be
+included in the calculation.
+
+.. seealso:: See :ref:`WallContactTime` and :ref:`ComponentPropertiesContactTime`
+   for more information on the input variables.
+
+
+.. note::  This model is limited to *real* components, i.e. solids, porous media, core gas,
+   and packed sediment components. The contact time is calculated only in relation
+   to fluid #1.
+
+
+.. index::
+   single: outputs; geometry
+   single: geometry data
+
+.. _GeometryOutput:
+
+========================================================
+Geometry Data
+========================================================
+
+  .. image:: images/model-setup/ModelSetup_OutputGeometry_v12.*
+     :alt: Force and torque outputs
+     :scale: 66%
+
+.. index::
+   single: outputs; component wetted area
+
+.. _wettedArea:
+
+
+Component wetted area
+========================================================
+
+The surface area of a component that is in contact with Fluid 1 can be output to the :ref:`historyData` by enabling the 
+:menuselection:`Model Setup --> Output --> Geometry Data --> Wetted area` option for the components of interest.
+
+.. index::
+   single: outputs; forces
+   single: outputs; torques
+   
+.. _force_torque_Out:
+
+
+Forces and torques on components
+========================================================
+
+.. _forceOut:
+
+Forces
+-----------------
+
+The pressure, shear, elastic, and wall adhesion forces on components can be
+output in the :ref:`historyData` by enabling the :menuselection:`Model Setup --> Output --> Geometry Data --> Forces` option.
+
+There are some additional options for the pressure force calculation
+controlling how cells that do not have a pressure (i.e. cells that are outside
+of the domain or inside another component) are treated during the summation of
+the pressure-area product for each cell around the component.  The default
+behavior is to use a user-defined :guilabel:`Reference pressure` in these
+cells.  If unspecified, the :guilabel:`Reference pressure` will default to the
+initial void pressure, :envvar:`PVOID`.  Alternatively, the code can use the
+average pressure on the exposed surface of the component by choosing the
+:guilabel:`Reference pressure is code calculated` option.
+
+Finally, for :ref:`gmoBasicsMR` there is an additional output of a *residual force*
+representing the force to move the object as prescribed / constrained.
+
+.. _torqueOut:
+
+Torques
+-----------------
+
+The torque on a component is also calculated and output in the :ref:`historyData` when the 
+:menuselection:`Model Setup --> Output --> Forces` option
+is enabled.  The torque is taken about the point specified by the 
+:guilabel:`X of reference point for force-moment`, :guilabel:`Y of reference point for force-moment`,
+and :guilabel:`Z of reference point for force-moment` inputs for stationary components.  
+The default location for the reference point is the origin.
+
+There are a couple of additional notes for :ref:`gmoBasicsMR`:  first, the torque 
+is reported about either (1) the center of mass location for 6-DOF motion or (2) about the rotation axis/point 
+for fixed-axis and fixed-point rotation.  Like is done with :ref:`forceOut` there is also an output of a *residual torque*
+representing the torque to move the object as prescribed / constrained.
+
+.. note::  Force and torque outputs are written to the the :guilabel:`General history` data for each geometry component. 
+           Outputs are provided as both the individual force / torque contributions (e.g., pressure, shear, elastic, wall adhesion),
+           and as a total combined force / torque calculated as the sum of the indivudual contributions. 
+
+
+.. index::
+   single: outputs; Buoyancy center
+   single: outputs; Metacentric height
+
+.. _buoyancy_metacentric:
+
+
+Buoyancy center and metacentric height
+========================================================
+
+Information about the buoyancy and stability of :ref:`gmoBasicsMR` can be output 
+in the :ref:`historyData` by enabling the 
+:menuselection:`Model Setup --> Output --> Geometry Data --> Buoyancy center & metacentric height`
+option for each component. This will output the location of the component's center of bouyancy 
+as well as the metacentric height.
+
+
+.. index::
+   single: output; advanced
+
+.. _AdvancedOutput:
+
+========================================================
+Advanced
+========================================================
+
+  .. image:: images/model-setup/ModelSetup_OutputAdvanced_v12.*
+     :alt: Advanced output options
+     :scale: 66%
+
+
+.. index::
+   single: outputs; Q-criterion
+   single: outputs; Vorticity
+
+.. _QcritOut:
+
+
+Fluid vorticity & Q-criterion
+========================================================
+
+Activate the :guilabel:`Fluid vorticity & Q-criterion` by clicking on the
+respective check box on the :menuselection:`Model Setup --> Output --> Advanced` tab when it is
+desired to compute and export the vorticity components as well as Q-criterion
+for vorticity structure:
+
+.. math:: Q_{criterion} = \omega_{x}^2 + \omega_{y}^2 + \omega_{z}^2 - \frac{1}{2}{e_{ij}}{e_{ij}}
+
+where:
+
+* :math:`\omega_{x}`, :math:`\omega_{y}`, :math:`\omega_{z}` are the different components of the vorticity vector
+* :math:`e_{ij} = \frac{1}{2} \left( \frac{\partial u_i}{\partial x_j} + \frac{\partial u_j}{\partial x_i} \right)`.
+
+The Q-criterion defines a vortex as a connected fluid region with a positive
+second invariant of the velocity gradient tensor. It represents the local
+balance between shear strain rate and vorticity magnitude, defining vortices
+as areas where the vorticity magnitude is greater than the magnitude of rate-
+of-strain.
+           
+
+.. index::
+   single: outputs; hydraulic data
+
+.. index:: hydraulic data
+
+.. _hydraulicDataOut:
+
+
+Hydraulic Data and Total Hydraulic Head 3D
+========================================================
+ 
+Hydraulic Data
+------------------
+
+To request depth-averaged :guilabel:`Hydraulic Data`, go to :menuselection:`Output --> Advanced`, 
+and check the box next to :guilabel:`Hydraulic data (depth averaged values and assuming gravity in -Z direction)`.
+
+This option causes |prod| to output additional **depth averaged** data that may be useful for
+hydraulic simulations, including: 
+
+* :guilabel:`Flow depth`
+* :guilabel:`Maximum flow depth`
+* :guilabel:`Free surface elevation`
+* :guilabel:`Velocity`
+* :guilabel:`Offset velocity`
+* :guilabel:`Froude number`
+* :guilabel:`Specific hydraulic head`
+* :guilabel:`Total hydraulic head`
+
+One value for each of these quantities is computed at every *(x,y)* location
+in the mesh and stored for every cell in the vertical column (because these
+quantities are depth-averaged, there is no variation of the data in the
+*z*-direction). The variables are calculated every cycle  to ensure accuracy.
+In all cases, :math:`V` is the depth-averaged velocity,  :math:`g` is the
+acceleration of gravity in the *z*-direction, :math:`D` is the fluid depth,
+and :math:`Z` is the minimum *z*-coordinate of the fluid in the column.
+
+* The :guilabel:`Free surface elevation` is computed as the *z*-coordinate of
+  the free surface in the topmost fluid element in a vertical column. 
+* The :guilabel:`Froude number` :math:`\text{Fr}` is computed from 
+  :math:`\text{Fr} = \frac{V}{\sqrt{gD} }`.
+* The :guilabel:`Fluid depth` is computed as the sum of all fluid in the depth averaged mesh column.
+* The variables :guilabel:`Specific hydraulic head` (:math:`H_{specific}`) and
+  :guilabel:`Total hydraulic head` (:math:`H_{total}`) are calculated from:
+  :math:`H_{specific} = \frac{V^2}{2g} + D` and :math:`H_{total} = \frac{V^2}{2g} + D + Z`,
+
+
+.. note::
+
+   * The depth-averaged hydraulic output options are only valid for 
+     fluid 1 when there is a sharp interface and gravity is oriented in negative 
+     *z*-direction.
+   * It should be kept in mind that the hydraulic
+     head calculations assume that the streamlines are parallel.  This can be an
+     issue if, for example, a flux surface is placed in a region of recirculating
+     flow.  In this case, the flux-averaged hydraulic head reported at the flux
+     surface may be larger than expected because the flow direction is ignored in
+     the calculation of the head.
+
+  
+
+Total Hydraulic Head 3D
+------------------------------
+
+Additionally, the :guilabel:`Total hydraulic head 3D` option can be checked to
+compute the total head in fluid 1 using the local (3D) velocity field, the hydraulic
+energy at flux surfaces (see :ref:`BafflesMnG`), and the flux-averaged
+hydraulic head at flux surfaces.  The 3D calculation is done using the local pressure
+(i.e. it does not assume that the pressure is related to the fluid depth) and
+is compatible with cylindrical coordinates.
+
+
+.. note::
+
+   * It should be kept in mind that the hydraulic
+     head calculations assume that the streamlines are parallel.  This can be an
+     issue if, for example, a flux surface is placed in a region of recirculating
+     flow.  In this case, the flux-averaged hydraulic head reported at the flux
+     surface may be larger than expected because the flow direction is ignored in
+     the calculation of the head.
+   * The 3D hydraulic head calculation assumes that the magnitude of the gravity 
+     vector is *one* when gravity is not defined in the input file. 
+
+
+Flux-averaged hydraulic head
+-------------------------------------
+
+The flux-averaged hydraulic head at a particular location (i.e., baffle) is computed 
+as:
+
+.. math::
+
+   \bar{h_{q}} = \frac{ \sum(q \cdot h) } { \sum q }
+
+where 
+
+* :math:`\bar{h_{q}}` is the flux-averaged hydraulic head
+* :math:`q` is the volume flow rate at a face of the flux surface (the product of the fluid fraction, the area, and the velocity).
+* :math:`h = \frac{1}{\rho g}\left[ (P - P_{void} ) + \rho \frac{u^2}{2} + z \right]`
+* :math:`\rho` is the fluid density.
+* :math:`g \cdot z` is the potential energy (gravity times height).
+* :math:`P_{void}` is the void pressure.
+
+It should be kept in mind that the hydraulic
+head calculations assume that the streamlines are parallel.  This can be an
+issue if, for example, a flux surface is placed in a region of recirculating
+flow, (e.g., like what is shown below):
+
+  .. image:: images/model-reference/flux_avg_head.*
+     :alt: Strong recirculating flow observed along the river
+     :scale: 33%
+
+In this case, the flux-averaged hydraulic head reported at the flux
+surface may be larger than expected because the flow direction is ignored in
+the calculation of the head.
+
+
+
+.. index::
+   single: outputs; measurement devices
+
+.. index:: measurement device outputs
+
+.. _MeasurementDeviceOutputs:
+
+========================================   
+Measurement Device Outputs
+========================================
+
+There are three main measurement devices in |prod|:  :ref:`HistoryProbesMnG`,
+:ref:`flux_surfaces_mng`, and :ref:`samplingVolumesMG`. Steps on how to add these devices 
+to a simulation are are described in the model setup section (See :ref:`measurement_mng`). 
+Their output is stored in the :guilabel:`General history` data catalog of the :file:`flsgrf` file 
+at the :ref:`historyData` edit time intervals. These results can be accessed by creating :ref:`TimeHistoryPlots` 
+in the :menuselection:`Analyze --> Probe` tabs. 
+
+
+.. index::
+   single: measurement device outputs; history probes
+
+.. index:: history probe outputs
+
+.. _HistoryProbeOutputs:
+
+History Probe Outputs
+======================
+
+Steps to create history probes are described in the model setup section (See :ref:`HistoryProbesMnG`). 
+Depending on the physics models used in the simulation, different
+output is available at each history probe. If a probe is specified as FSI/TSE, it
+will only provides stress/strain data at that location which should fall
+inside the finite element mesh. If a fluid probe is located inside area
+blocked by a solid geometry component, then only quantities related to the
+geometry (e.g., wall temperature) will be computed. Usually an interpolation is required to compute these quantities at the
+location defined by the probe coordinates.
+
+.. index::
+   single: measurement device outputs; flux surfaces
+
+.. index:: flux surface outputs
+
+.. _FluxSurfaceOutputs:
+
+Flux Surface Outputs
+========================================
+
+Flux surfaces are special objects that are used to measure the flow of 
+quantities through them. Steps to create flux surfaces are described in the model 
+setup section (See :ref:`flux_surfaces_mng`). The computed quantities for each flux surface include:
+
+* **Volume flow rate for fluid #1**
+* **Volume flow rate for fluid #2** (for two-fluid problems only)
+* **Combined volume flow rate** (for two-fluid problems only)
+* **Total mass flow rate**
+* **Flux surface area wetted by fluid #1**
+* **Flux-averaged hydraulic head** when :guilabel:`3D Hydraulic Head` is requested from additional output options
+* **Hydraulic energy flow** when hydraulic data output is requested
+* **Total number of particles** of each defined species in each particle class 
+  crossing flux surface when the particle model is active
+* **Flow rate for all active and passive scalars** this includes scalar quantities associated with active physical models (eg. suspended sediment, air entrainment, ect.)
+
+.. note:: 
+   * The signs of the flow rate and particle count are positive when the flow or a
+     particle crosses from the negative side of the flux surface to the positive side, as
+     defined by the sign of the function describing the flux surface.  
+   * Flux surfaces should have at least two mesh cells between them for the flow
+     rate and particle count of each surface to be accurate.
+   * When using the :ref:`hydraulicDataOut` option it should be kept in mind that the hydraulic
+     head calculations assume that the streamlines are parallel.  This can be an
+     issue if, for example, a flux surface is placed in a region of recirculating
+     flow.  In this case, the flux-averaged hydraulic head reported at the flux
+     surface may be larger than expected because the flow direction is ignored in
+     the calculation of the head.     
+
+
+.. index::
+   single: measurement device outputs; sampling volumes
+
+.. index:: sampling volume outputs
+
+.. _SamplingVolumeOutputs:
+
+Sampling Volume Outputs
+==========================
+
+Sampling volumes are three dimensional data collection regions that measure volumetric quantities within their bounds. Steps to create sampling volumes are described in the model setup section (See :ref:`samplingVolumesMG`). The computed quantities for each sampling volume include:
+
+* **Total volume of fluid #1 within the sampling volume**
+* **Center of mass of fluid #1 within the sampling volume**
+* **Hydraulic forces and moments** relative to the origin of the coordinate system 
+  acting on all wall boundaries within the sampling volume, including solid surfaces 
+  that are located at the sampling volume edges.
+* **Total amount of scalar species within the sampling volume:** this is 
+  calculated as a volume integral, so if a scalar quantity represents mass 
+  concentration, then the total mass within the sampling volume is computed. 
+  For some species, like the residence time, an average value is computed 
+  instead.
+* **Number of particles within the sampling volume:** number of particles of each 
+  defined species in each particle class that are currently inside each sampling 
+  volume (when the particle model is active). 
+* **Mass averages for the kinetic energy, turbulent energy, turbulent dissipation rate, and vorticity** 
+* **Heat flow rates at each of the six boundaries of a sampling volume:** these
+  include fluid convection, conduction in fluid and solid components and
+  fluid/component heat transfer. The sign of each flux is determined by the
+  coordinate direction, for example, heat flux in the positive x-direction is
+  also positive.  These are not automatically plotted in :file:`flsplt` unless
+  :guilabel:`Expanded` or :guilabel:`Maximum` debug level is selected in
+  :guilabel:`Output`.

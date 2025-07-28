@@ -1,0 +1,436 @@
+
+
+:tocdepth: 6
+
+.. index::  simulation manager
+   
+
+.. _Sim_manager:
+
+###################################
+Simulation Manager
+###################################
+
+This chapter is intended to describe the purpose and use of the
+:guilabel:`Simulation Manager` in |prod|. There are four primary components of
+the :guilabel:`Simulation Manager`: the :ref:`sim_manager_portfolio`, the
+:ref:`sim_manager_queue`, the :ref:`sim_manager_plots`, and the
+:ref:`sim_manager_solver_messages`.  Each of these will be described in detail
+below.  The menu items and some supporting features are also discussed in the 
+:ref:`sim_manager_menus` and :ref:`sim_manager_misc` sections.
+
+  .. image:: images/sim-manager/V12_simmanager.*
+    :alt: simulation manager components
+
+.. index::
+   single:  Simulation Manager; Portfolio
+
+.. _sim_manager_portfolio:
+
+=========================
+Portfolio
+=========================
+
+The :guilabel:`Portfolio` is a file management area on the left side of the :guilabel:`Simulation Manager` that:
+
+1. Controls which simulations and workspaces are available in the user interface.  
+#. Sets the context for the user interface; *i.e.,* what information is shown in the
+   :ref:`sim_manager_plots`, :ref:`sim_manager_solver_messages`, :doc:`model-setup`, etc. 
+#. Provides controls for running the solver and supporting processes.
+
+The operation of the :guilabel:`Portfolio` is based around two organizational
+objects, *Simulations* and *Workspaces*. A simulation is a collection of files
+that define a single computational fluid dynamics (CFD) model; it is composed
+of the solver input file, :file:`prepin.*`, and any supporting input files
+that are needed to define geometry, tabular inputs, etc. A workspace is a
+higher-level object representing collection of simulations.  Both objects are
+presented in a tree structure, with the workspaces shown as the upper level
+items and the simulations shown as the contents.  The context for the rest of
+the user interface (i.e., which plots are shown in the
+:ref:`sim_manager_plots`, which input file is edited in the :doc:`model-setup`,
+etc.) is set based on the simulation or workspace that is currently
+selected in the :guilabel:`Portfolio`.  An example of the portfolio is shown below;
+the context for the user interface is currently for the :menuselection:`Sediment Scour` simulation:
+
+  .. image:: images/tutorial/V12_portfolio.*
+    :alt: workspaces in the portfolio
+
+Workspaces can be created, opened, copied, or closed through the
+:menuselection:`File` menu or by right-clicking on an existing workspace.
+Similar options are available for simulations through the
+:menuselection:`File` menu or by right-clicking on an existing simulation or
+workspace.  The exact options depend on what is currently selected in the
+:guilabel:`Portfolio`, but any simulations that are created or opened will be
+added to the workspace associated with the currently-selected item.  The main
+options are listed below.
+
+.. rubric::  Workspaces
+
+* :menuselection:`New Workspace`:  This option will create a new workspace in the listed directory.
+* :menuselection:`Open Workspace`:  This option will open an existing workspace.
+* :menuselection:`Show Workspace in Explorer`:  This option will open a file explorer window at the directory that contains the workspace.
+* :menuselection:`Load Workspace`:  This option will load an existing workspace and any associated simulations contained into the :guilabel:`Portfolio`. 
+* :menuselection:`Save Workspace`:  This option will save any changes made to the workspace and contained simulations.
+* :menuselection:`Copy Workspace`:  This option will copy the workspace and selected simulations to a listed directory.
+* :menuselection:`Unload Workspace`:  This option will remove the simulations contained in a workspace from memory. 
+* :menuselection:`Close Workspace`:  This option will unload the workspace and remove the workspace from the :guilabel:`Portfolio`. 
+
+.. rubric:: Simulations
+
+* :menuselection:`Add New Simulation`:  This option creates a new simulation in the selected workspace.
+  The simulation :ref:`unitsms` and :ref:`pressuretypems` are chosen at this stage.  The simulation 
+  can also be created from a :guilabel:`Simulation Template`, which is a previously-defined input file that was saved
+  as a template.  This provides an easy mechanism to define commonly-used settings to all new simulations.
+* :menuselection:`Add Existing Simulation`:  This option will open an existing simulation and add it to the selected workspace. 
+* :menuselection:`Add Restart Simulation`:  This option will copy the selected simulation and automatically configure the restart options to read the last restart data point from the copied simulation's results.
+* :menuselection:`Add Simulation Copy`:  This option will add a copy of the selected simulation in a separate directory.
+* :menuselection:`Save Simulation as Template`:  This option will save the selected simulation as a template that can be applied to future new simulations.
+* :menuselection:`Add Example`:  This option will add one of the |prod| example simulations to the workspace.
+* :menuselection:`Save Simulation`:  This option will save any changes to the simulation
+* :menuselection:`Save Simulation as`:  This option will save a copy of the selected simulation with a new name.  The copy will replace the original simulation in the workspace, but the original simulation is not deleted. 
+* :menuselection:`Revert Simulation to Saved`:  This option will replace the simulation in the interface with the last saved version. Note that the last saved version includes autosaved changes.
+* :menuselection:`Edit Simulation`:  This option will open the simulation input file in the built-in text editor. 
+* :menuselection:`Load Simulation`:  This option will load the selected simulation into memory.
+* :menuselection:`Unload Simulation`:  This option will remove the selected simulation from memory.
+* :menuselection:`Remove Simulation`:  This option will remove the selected simulation from the workspace.
+* :menuselection:`Delete Simulation from all Workspaces and Disk`:  This option will permanently delete the simulation and associated files from the hard disk and remove the simulation from all open workspaces. Notably, this is the only command that actually removes files from the hard disk.
+
+There are no limits on the number of workspaces nor the number of simulations
+per workspace, though it is usually helpful to remove inactive simulations
+from workspaces and close inactive workspaces to help with clarity.  These
+files are not deleted; just removed from the display.
+
+.. seealso::  See the :ref:`sim_mgr_tut_workspace` section in the :doc:`tutorial`
+   chapter for a guide on using the :guilabel:`Simulation Manager`.
+
+.. index::
+   single:  Simulation Manager; Queue
+
+.. _sim_manager_queue:
+
+=========================
+Queue
+=========================
+
+The simulation :guilabel:`Queues` area shows the status and staging of the
+jobs that are being preprocessed, run, or postprocessed for each server (a
+computer running an instance of |prod|). Each server has three separate queues
+for each of the different job types:
+
+* :guilabel:`Preprocessing`:  The preprocessor gives the user access to 
+  detailed plots showing the initial conditions.  This is described in more
+  detail in :ref:`preprocessing`.
+* :guilabel:`Simulations`:  The solver computes the solution to the  
+  governing equations for the specified properties, geometry, initial 
+  conditions, and boundary conditions.  This is often referred to as *running* a simulation 
+  and is described in more detail in the :ref:`solving` section.
+* :guilabel:`Postprocessing`:  |fst| can be run in a batch mode to generate plots
+  and reports with minimal user interaction, as described in :ref:`batch_postprocessing`.
+
+Jobs (e.g., a request to preprocess or run a simulation) are submitted to one
+of the available queues and the jobs in each queue are executed in sequence.
+Jobs in the :guilabel:`Preprocessing` and :guilabel:`Postprocessing` queues
+will be run in parallel if there are enough available license tokens (see
+:ref:`flow3dTokens`). This is also possible in the :guilabel:`Simulations`
+queue, but there is additional control over the maximum number of simultaneous
+simulations through the :menuselection:`Simulate-->Set Max Simultaneous
+Simulations` preference.  In general, running a single simulation at a time
+will give the best performance.  Each queue operates independently, so
+multiple jobs can be running concurrently in different queues on different
+servers, as shown below:
+
+   .. image:: images/simulate/queue.*
+      :alt: Queues
+
+The buttons below the queue allow the user to pause, resume, terminate,
+and re-prioritize the selected job in the queue. The controls are:
+
+
+  .. tabularcolumns:: |c|p{12.0cm}|
+
+  .. list-table::
+     :widths: 5 60
+     :header-rows: 1
+     :class: longtable
+
+     * - ICON
+       - ACTION       
+     * - |pause|
+       - Pause the selected simulation. Either the pause or play icon will be shown 
+         at a time depending on the state of the simulation (paused or simulating).
+     * - |play|
+       - Resume the selected simulation. Either the pause or play icon will be shown 
+         at a time depending on the state of the simulation (paused or simulating).    
+     * - |stop| 
+       - Terminate the selected simulation (if running) or remove the selected
+         simulation from the queue (if queued but not running).
+     * - |up|
+       - Move the selected simulation higher in the queue.
+     * - |down|
+       - Move the selected simulation lower in the queue.
+     * - |download_button|
+       - Download the results from the remote server.  
+         This is only active after the simulation completes or is terminated.
+
+Options to :ref:`Run Batch Process <batch_postprocessing>`,  :ref:`Generate
+Batch Report <report_generation>`, and :ref:`Run Simulation and Batch Process
+<batch_postprocessing>` are also available from the :guilabel:`Simulate` and
+right-click menus. From the right-click menu, the user can also access
+:menuselection:`Simulation completion details`. By the selecting this option,
+the user can access information for the :guilabel:`Completion date` and
+:guilabel:`Completion time`.
+
+The current status of any registered remote servers (see :ref:`RemoteSolvingSetup`)
+can be accessed from the :menuselection:`Simulate-->Show Server Loads...` menu.
+This will show the current number of simulations running on the remote server,
+the available CPU, and the available memory as shown below. 
+
+   .. image:: images/simulate/server-loads.*
+      :alt: Remote server loads
+
+.. note:: Selecting a simulation in a queue will change the focus in the 
+   :guilabel:`Portfolio` to the current simulation and update the information 
+   shown in the user interface to the selected simulation.  
+
+.. seealso::
+   * The :ref:`sim_mgr_run_tut` of the :doc:`tutorial`
+   * The :doc:`simulate` chapter
+   * The :ref:`RemoteSolvingSetup` section for details on adding additional servers
+
+
+.. index::
+   single:  Simulation Manager; Plots
+   single:  Simulation Manager; Run-time plots
+
+.. _sim_manager_plots:
+
+=========================
+Run-time plots
+=========================
+
+The :guilabel:`Run-time plots` graphically show information from the
+currently-selected simulation in the :guilabel:`Portfolio`.  This includes
+diagnostic information as well as any variable in the :ref:`historyData`,
+including those from the various :ref:`measurement_mng`.  The default plot
+configuration will show individual plots about the convergence behavior of the
+active implicit solvers, conservation errors (convective and inter-block
+boundary volume error), and the current time step size and the smallest
+explicit stability limit.
+
+The run-time plots are presented in two parts: the :ref:`runtime_plot_graphs`
+and the :ref:`runtime_plot_controls`. 
+
+   .. image:: images/sim-manager/V12_simmanager_plot_legend.* 
+        :alt: Runtime plots
+
+.. index:: 
+   single: Runtime plots; Graphing area
+
+.. _runtime_plot_graphs:
+
+Graphing area
+================
+
+The graphing area is where the plots are actually drawn. Each graph is placed
+on its own tab, and new graphs can be added by clicking the |add_icon| on top
+of the tab widget. Tabs can be navigated directly or from the list displayed
+from the |runtime_plot| icon above the graph.
+
+There are some special controls when interacting with the graphs:
+
+* Hovering over the graph will show the coordinates of the cursor
+* Left-clicking will initiate a rubber-band zoom
+* The scroll wheel will zoom
+* The escape key resets the view
+* Right-clicking accesses the options to save the plot(s)
+
+A graph (the plots shown on a single tab) or the configuration (all of the
+graphs) can be saved by right-clicking in the graphing area or by pressing the
+|database| icon.  The menu will present an option to save the graph or
+configuration to a specific database and whether to append the new
+graph/configuration to an existing configuration or to create a new
+configuration.
+
+.. seealso:: See the :ref:`runtime_plot_db` section for discussion of the different database options
+
+
+.. index:: 
+   single: Runtime plots; Controls
+
+.. _runtime_plot_controls:   
+
+Plot controls
+=================
+
+The plotting controls are composed of three tabs, one for each of the primary controls.
+They are described in the subsequent sections.
+
+.. index:: 
+   single: Runtime plots; Legend
+   single: Runtime plots; Style
+
+.. _runtime_plot_style:
+
+Legend/Style
+-----------------
+  
+The :guilabel:`Legend/Style` tab displays the legend for the currently-
+selected graph and gives controls over the title/tab name and the selected
+curve colors.  Clicking on an entry in the list will provide summary
+statistics (the minimum, maximum, average, and sum) for the selected variable.
+
+.. image:: images/sim-manager/V12_simmanager_legend.* 
+   :alt: runtime legend
+
+.. index:: 
+   single: Runtime plots; Variable selection
+
+.. _runtime_plot_vars:
+  
+Variables
+-----------------
+
+All of the :ref:`historyData` variables are available for plotting and appear
+in the table on this tab. Variables may be added to (or removed from) the
+currently-selected graph by clicking in the area next to the variable name
+under the |plot_var| icon.
+
+The list of available data can also be filtered by the variable category
+(e.g., :menuselection:`Solver diagnostics` or :menuselection:`Mesh`), the
+relevant object name (e.g., *Mesh block 1* or *Component 1*), or through the
+search box. The table also supports the ability to multi-select items in the
+table by holding the *shift* key.  The entire selection can then be toggled
+on/off via the right-click menu.
+
+.. image:: images/sim-manager/V12_simmanager_variables.* 
+   :alt: runtime variables
+
+.. index:: 
+   single: Runtime plots; Plot Database
+
+.. _runtime_plot_db:
+
+Plot Database 
+---------------
+  
+The :guilabel:`Plot Database` tab provides the ability to rapidly reuse saved
+graphs for different simulations. The :guilabel:`Plot Database`  tab displays
+a tree structure, with databases as the top level entries, followed by
+configurations (groups of graphs), followed by graphs (groups of curves),
+followed by individual curves (a single variable vs. time).  There is also
+color coding to indicate whether a configuration or graph may be plotted
+for the current simulation.  Black-colored names indicate that all variables
+in the graph/configuration are available, gold-colored names indicate that
+only some of the variables are available, and red text indicates that none of
+the variables are available.
+
+.. image:: images/sim-manager/V12_simmanager_database.* 
+   :alt: runtime database
+  
+New and existing databases can be added by clicking the :guilabel:`Import Database Location` 
+button and simply browsing to the existing database or the
+desired location for the new database. This allows users to share databases if needed.
+Database locations can be unloaded using
+the :guilabel:`Unload` button, but unloading will not delete any saved plots
+at that location.  Graphs and configurations in user-defined databases may be 
+deleted by selecting the unwanted graph/configuration and clicking on the 
+:guilabel:`Delete` button.
+
+A graph (the plots shown on a single tab) can be loaded to the current
+simulation by selecting the desired graph in the database and choosing either
+:menuselection:`Plot-->Graph-->On current graph` or
+:menuselection:`Plot-->Graph-->As new graph`, depending on whether the
+associated curves should be appended to the currently-selected tab or create
+an entirely new tab.  These options are also present in the right-click menu
+for graphs.
+
+Similar options exist for configurations (groups of
+graphs) by selecting the desired configuration and choosing either the
+:menuselection:`Plot-->Configuration-->To existing` or
+:menuselection:`Plot-->Configuration-->As new`, depending on whether the
+series of graphs should be appended to the current set of graphs or replace
+them entirely. These options are also present in the right-click menu for configurations.
+
+To view just the graphing area select the hide plot controls icon located
+above the plot controls, then to show plot controls select the show plot
+controls icon in the same location.
+
+.. index::
+   single:  Simulation Manager; Plots
+   single:  Simulation Manager; Run-time plots
+
+.. _sim_manager_solver_messages:
+
+=========================
+Solver Messages Window
+=========================
+
+The :guilabel:`Solver Messages Window` displays the status of a simulation
+during and after the simulation run. This text will be blank until
+preprocessing is started, and will update as the simulation runs. The text
+will include status updates, warnings and error messages, and mentor
+suggestions. These outputs can help troubleshooting a setup or understanding
+the behavior of a simulation.
+
+.. image:: images/sim-manager/V12_simmanager_solvermessages.* 
+   :alt: solver messages
+   :align: center
+
+.. seealso::  See the :ref:`Hd3msgFile` section in the :doc:`troubleshooting`
+   chapter for more information.
+
+
+.. index:: 
+   single: Simulation Manager; Menus
+
+.. _sim_manager_menus:
+
+============================
+Menus
+============================
+
+There are eight drop-down menus in |prod| that provide access to different parts of the user interface:
+
+* :menuselection:`File`:  The :menuselection:`File` menu provides traditional file management options for 
+  simulations and workspaces.  There is more description of the available options in the 
+  :ref:`sim_manager_portfolio` and :ref:`sim_mgr_tut_workspace` sections.
+* :menuselection:`Diagnostics`: This menu provides access to the text diagnostics written by the preprocessor
+  and solver.  These output files are covered in detail in the :doc:`troubleshooting` section.
+* :menuselection:`Preferences`:  Controls over the visual layout, file management defaults, simulation settings,
+  communications, and databases are all accessed from this menu.  There is a full description of these options in 
+  the :ref:`preferences` section of the manual.
+* :menuselection:`Physics`:  Each of the different physical models can be accessed from this drop-down menu.
+  The main discussion of these models is in :ref:`physicsMS`, with more detailed discussion in the :doc:`theory`
+  and :doc:`model-reference` chapters.
+* :menuselection:`Utilities`: The :menuselection:`Utilities` menu gives access to the :doc:`utilities` that we
+  distribute with |prod| to facilitate workflows.
+* :menuselection:`Simulate`: The :menuselection:`Simulate` menu provides access to options for running the 
+  simulation pre-check, preprocessor, solver, and batch processes.  These options are described in detail 
+  in the :doc:`simulate` chapter.
+* :menuselection:`Databases`: The :menuselection:`Databases` menu accesses the :ref:`matdbms`, which stores
+  fluid and solid properties for use during the :doc:`model-setup`.
+* :menuselection:`Help`:  The :menuselection:`Help` menu accesses the documentation, tutorial, RSS feed, and
+  web pages for Flow Science, the user's site, and the user forum. 
+
+.. index::
+   single:  Simulation Manager; Runtime options
+   single:  Simulation Manager; Restart times
+   single:  Simulation Manager; Data requests
+
+.. _sim_manager_misc:
+
+=========================
+Supporting functions
+=========================
+
+There are a few convenient functions that are also available on the
+:guilabel:`Simulation Manager`, including the :guilabel:`Runtime Options`,
+:guilabel:`Restart times`, and plot request buttons.  
+
+* The :guilabel:`Runtime Options` button gives access to some of the :ref:`availableNumericalOptionsMR` 
+  while a simulation is running, allowing for mid-course adjustments to the solver.  These are described
+  in detail in the :ref:`runtimechanges` section.
+* The :guilabel:`Restart times` button displays the times where restart data (see :ref:`restartData`) 
+  is available for use with  :ref:`Restarts` simulations.
+* The plot icons, |plot_icons|, give allow users to request a restart data point, 
+  a history data point, or a short print data point at any time during the simulation.    

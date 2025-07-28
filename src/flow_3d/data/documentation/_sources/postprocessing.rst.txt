@@ -1,0 +1,125 @@
+.. ***********************************************************************
+.. include common postprocessing section
+.. include::  ../shared/postprocessing/postprocessing.rst
+
+.. ***********************************************************************
+
+.. index:: command line, post-processing 
+
+.. _CommandLinePP:
+
+=================================================
+Command Line Post-processing: PLTFSI and FLOWPLOT
+=================================================
+
+In some circumstances, the basic text-input interface provided by
+:program:`PLTFSI` and :program:`FLOWPLOT` may be preferable to  either
+:ref:`flowsight` or :ref:`postprocessWithFlow3d`.  This section will
+introduce the mechanics of post-processing |prod| results using this software. The
+symbol ``$`` in this section represents a command prompt.
+
+
+.. index:: plot requests
+
+Modifying Plot Requests
+=========================
+
+Sometimes users may want to have additional output plots that were not
+specified ahead of time, or may simply want to modify previously defined plots
+(for example, changing the plotting plane for 2-D plots). In these cases, plot
+request files may be modified and plotted manually by running the
+postprocessor using the runscripts.
+
+There are two approaches to creating new or modified plots. The first approach
+would have the user edit the :file:`flsinp.dat` file to modify plots or to
+include new plots. Alternatively, users can modify :file:`prepin.inp` and run
+the preprocessor to create a new :file:`flsinp.dat`. The postprocessor can
+then be run with this new flsinp.dat to create the new plots. For information
+on the :file:`flsinp` file options, see the :doc:`postprocessing` chapter. For
+information on specifying plot requests directly in the :file:`prepin` file,
+see the :ref:`GraphicOutputGRAFIC` section in the :doc:`input-variable-summary-units` chapter.
+
+.. image:: images/utilities/modifying-plot-requests.*
+   :alt: Modifying plot requests
+
+Note that the postprocessor can be run while the solver is running. This allows the user
+to look at data plots up to the current simulation time, for example, to check
+that the simulation is proceeding as expected.  For details on running the
+postprocessor from the command line, see :ref:`runscripts`.
+   
+.. index:: 
+   triple: display program; PLTFSI; FLOWPLOT
+
+Running PLTFSI and FLOWPLOT
+========================================
+
+:program:`PLTFSI` and :program:`FLOWPLOT` are graphical programs that allow
+users to view the plots created by the postprocessor (:file:`flsplt.*` files)
+and preprocessor files (:file:`prpplt.*`).  They can also create bitmap
+:file:`.bmp` files on Windows PC machines, and postscript :file:`.ps` files on
+both PC and Linux platforms.  :program:`PLTFSI` is available on both Linux and
+Windows systems, while :program:`FLOWPLOT` is Windows-only. Both programs
+reside in the :file:`$F3D_HOME/local` directory.  In order to use the programs,
+the :envvar:`PATH` environment variable must be modified to include
+:file:`$F3D_HOME/local` otherwise the programs will not be found.
+
+To run :program:`PLTFSI` or :program:`FLOWPLOT`:
+
+1. Open a command prompt or terminal.
+#. Set the necessary environment variables.  
+#. Change to the directory containing the desired results file.
+#. Enter the desired runscript command, e.g. ``$ pltfsi`` or ``$ flowplot``. 
+
+After starting :program:`PLTFSI` the user is prompted for the plot file name. Type
+it in, for example, :file:`flsplt.dat`, and press :guilabel:`Enter`. A text menu
+will appear showing the available options and brief description of each. The
+see the full list of plots press :guilabel:`l`. To view all the plots press
+:guilabel:`d`. Alternatively, to display a specific plot or plot range press
+:guilabel:`dN` or :guilabel:`dN-M`, where :guilabel:`N` and :guilabel:`M`
+denote the plot numbers in the list of plots.
+
+.. tabularcolumns:: |p{4.0cm}|p{7.0cm}|
+
+.. _PlotOptionsTable:
+
+.. list-table::
+   :widths: 15 85
+   :header-rows: 1
+   :class: longtable
+
+   * - OPTION NUMBER
+     - OPTION
+
+   * - 0
+     - Exit
+
+   * - 2 or 1
+     - Display the list of plots in the file
+
+   * - 4 or d
+     - Display plots
+
+   * - 5 or w
+     - Write :file:`PostScript` files
+   
+   * - 8
+     - Open another plot file
+
+   * - 10
+     - Select plotting options
+
+   * - 11
+     - Help
+
+   * - 12
+     - Saving current viewing settings
+
+   * - 13
+     - Restore previously saved viewing options
+
+Another display program :program:`FLOWPLOT`, similar to :program:`PLTSFSI` in
+its capabilities, but more user-friendly, is available on Windows. Type
+*flowplot* at the command line and a graphical user interface will appear with
+a menu for opening and viewing plot files.
+
+

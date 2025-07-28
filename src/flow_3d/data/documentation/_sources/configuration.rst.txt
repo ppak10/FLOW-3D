@@ -1,0 +1,80 @@
+.. *********************************************************
+.. include shared configuration description
+
+.. include:: ../shared/installation/configuration.rst
+
+.. *********************************************************
+
+.. index:: Preferences 
+
+.. _preferences:
+
+=====================================
+Preferences
+=====================================
+
+The :guilabel:`Preferences` drop-down menu allows users to control default settings for
+file locations, remote simulation, etc.  A brief description of the options is given below:
+
+.. rubric:: Visuals
+
+* :menuselection:`Sub-tab Color`:  This option allows sub-tabs, e.g. :guilabel:`Meshing & Geometry` 
+  to be colored differently from the main tabs for easy identification.
+* :menuselection:`Use default screen resolution for snapshots`:  Allows for user-defined 
+  screenshot resolutions.
+* :menuselection:`Set Font for Simulation Output Text and General/Notes`:
+  Choose the display font for the output text and the notes.
+* :menuselection:`Show Simulation Information in Simulation Manager`:  Shows/hides
+  the diagnostic text at the bottom of the :guilabel:`Simulation Manager`.  
+
+.. rubric:: File management
+
+* :menuselection:`Default Workspace Location`:  This allows the user to choose the 
+  default location where workspaces will be created. 
+* :menuselection:`Add Existing Simulation starts in Workspace`:  This determines whether
+  the :menuselection:`Add Existing Simulation` dialog opens in the folder containing the 
+  currently selected workspace or not.
+* :menuselection:`Project Creation/Copy Options`:  This controls the file system
+  structure for simulations and what is copied between simulations.  
+* :menuselection:`Autosave Options`:  Controls how frequently the simulation setup
+  is saved automatically.
+* :menuselection:`Auto-raise Project/Results File Dialog`:  Prompt user
+  to load a new results file if the simulation that is selected on the 
+  :guilabel:`Simulation Manager` does not match the results file that is open
+  on the :guilabel:`Analyze` tab.
+* :menuselection:`Load Simulations When Opening Workspace`:  Option to automatically
+  load simulations into memory when a workspace is opened.
+
+.. rubric:: Simulation settings
+
+* :menuselection:`Default Version Options`:  This allows the user to choose the 
+  default :ref:`versionoptionsms` for the local machine and all remote machines.
+  :guilabel:`Run With Available` provides permission to the solver to run with less core/license 
+  resources than requested. This is useful when there are other simulations running and 
+  or core resources are limited to less than requested number of processors. 
+* :menuselection:`Simulation Pre-Check Tolerance`:  This is the default tolerance for 
+  the :ref:`matpropscheck` in the :ref:`simprecheck`.
+* :menuselection:`Set Default Selected Parameters for Selected Data in Output`:
+  Choose which variables will be output by default in the :ref:`Selected Data <selectedData>`.
+* :menuselection:`Model Setup`: The visuals of the widgets in :guilabel:`Model Setup` can be modified 
+  here to show or hide labels on the process toolbar. Additionally, the user saved preferences of the :guilabel:`Model Setup` layout
+  can be reset to the default configuration.
+* :menuselection:`Simulation Default Settings`: This allows the user to define the standard units
+  and pressure reference applied by default to new simulations. If custom units are desired, those can be selected here. Custom units cannot be displayed in post processing on the scale in the :guilabel:`Display` tab.
+
+.. rubric:: Communications
+
+* :menuselection:`Remote Simulation Preferences`:  This gives access to the 
+  :ref:`RemoteSolvingSetup` controls, including those for :ref:`Remote Server Registration <clientremote>`
+  and :ref:`leaving the results on the remote machine <clientremote>`.
+* :menuselection:`Local Queue Communications Settings`:  This allows for the configuration
+  of the local queue settings, including the port number.
+
+.. rubric:: Databases
+
+* :menuselection:`Location`:  This allows users to add and remove each :ref:`matdbms`. 
+  At the first launch of |prod| after installation, a prompt will include selection
+  of any preexisting :ref:`matdbms` locations to include. The :menuselection:`Location` 
+  menu provides user control for each database that is stored at a local or network location.
+
+

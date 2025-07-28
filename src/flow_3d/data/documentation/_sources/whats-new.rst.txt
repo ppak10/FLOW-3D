@@ -1,0 +1,420 @@
+
+
+:tocdepth: 6
+
+.. index::
+   pair: New features; FLOW-3D
+   pair: What's new; FLOW-3D
+
+###################################
+What's New in this Version?
+###################################
+
+
+|prodv| continues to streamline engineers' simulation workflows by 
+enabling them to more quickly set up simulations, avoid common errors,
+identify and enter missing data, and postprocess results to produce critical
+and useful information faster.  Some of the new features in |prodv| are 
+described below.
+
+.. important::
+
+   All input files that were created in previous versions of |prod| will need
+   to be checked for deprecated parameters and updated. This can be done by
+   loading the input file into the user interface, at which point the
+   automatic file converter will updated the file and write a log describing
+   the changes without altering the original file.  However, the file
+   converter in the user interface may not be able to update all parameters in
+   input files that are several versions older than |prodv|, so some older
+   input files may require manual updating.
+
+
+=========================================
+New solver features and  improvements
+=========================================
+
+
+
+Physical and Numerical Models
+================================
+
+.. index::
+   pair: New features; Usability
+   
+.. _brand_new_user_interface:
+
+
+Immersed boundary method 
+--------------------------------------------------------------------
+
+Accurate prediction of forces and energy losses is crucial in the success of
+modeling many engineering problem involving flow around solid bodies. The new
+release features a new ghost-cell based Immersed Boundary Method (IBM)
+designed for such problems. IBM provides a more accurate solution near walls
+for internal and external flows, improving the calculation of drag and lift
+forces.
+
+
+`Read the Blog <https://www.flow3d.com/immersed-boundary-method/>`_ 
+
+
+Two-field temperature for the two-fluid model
+--------------------------------------------------------------------
+
+The two-fluid heat transfer model has been extended to separate energy
+transport equations for each fluid. Each fluid now has its own temperature
+variables, which improves the accuracy of the heat and mass transfer solutions
+near the interface. Heat transfer at the interface is now controlled by a
+user-defined heat transfer coefficient that can be a tabular function of time.
+
+`Read the Blog <https://www.flow3d.com/two-fluid-two-temperature-model/>`_ 
+
+Sludge settling model
+--------------------------------------------------------------------
+
+The new :ref:`sludgeSettlingSectionMR` model, a valuable addition for
+municipal applications, allows users to model the solid waste dynamics in
+water treatment tanks and clarifiers. Unlike the drift-flux model, where the
+settling velocity is a function of the droplet size of the dispersed phase,
+the settling velocity is a function of sludge concentration and can be input
+in both functional and tabular form.
+
+
+Steady-state accelerator for free surface flows
+--------------------------------------------------------------------
+
+As the name implies, the :ref:`steady_StateAccelerator_FreeSurfaceMR` quickens
+the approach to a steady state solution. This is achieved by damping small-
+amplitude gravity and capillary surface waves, and is applicable only to free-
+surface flows.
+
+  .. image:: images/whats-new/ssac.*
+
+|
+
+`Read the Blog <https://www.flow3d.com/steady-state-accelerator-free-surface-flows/>`_ 
+
+Void particles
+--------------------------------------------------------------------
+
+:ref:`particle_setup_void` have been added to the bubble and phase change
+model. :ref:`particle_setup_void` represent collapsed void regions, acting as
+small bubbles that interact with the fluid via drag and pressure forces. Their
+size changes in response to the surrounding fluid pressure, and their final
+location at the end of the simulation indicates a potential for air
+entrainment.
+
+Sediment scour model
+--------------------------------------------------------------------
+
+The :ref:`sedimentScourMR` model has been overhauled to enhance its accuracy
+and stability. In particular, the mass conservation for sediment species has
+been greatly improved.
+
+
+Outflow pressure boundary condition
+--------------------------------------------------------------------
+
+The :ref:`PressureBoundaryConditionsTh` now includes an :guilabel:`Outflow`
+option, where all flow quantities except for pressure and fluid fraction
+reflect the flow conditions upstream of that boundary. The outflow pressure
+boundary condition is a hybrid of a fixed-pressure and continuity boundary
+conditions.  This is described in detail in :ref:`outflowPressureBoundaryMR`.
+
+  .. image:: images/whats-new/pressure_outflow.*
+ 
+Moving particle sources
+--------------------------------------------------------------------
+
+Particle sources in :ref:`particle_blocks_sources` can now move during a
+simulation. Time-dependent translational and rotational velocities are defined
+in a tabular form. The motion of a particle source is added to the initial
+velocity of the particles emitted at the source.
+
+Variable center of gravity 
+--------------------------------------------------------------------
+
+In the gravity and non-inertial reference frame model, the location of the
+center of gravity as a function of time can be defined as a table in an
+external file. This feature is useful when modeling, for example, a rocket
+that is expending fuel and separating stages.
+
+Air entrainment model
+--------------------------------------------------------------------
+
+The simplest volume-based :ref:`airEntrainmentMR` model option has been
+replaced by the existing mass-based model. The mass-based model is more
+physics-based since, unlike volume, entrained air mass is conserved while its
+volume changes in response to the surrounding fluid pressure.
+
+  .. image:: images/whats-new/air_entrain.*
+ 
+Tracer diffusion
+--------------------------------------------------------------------
+
+Tracers generated at :ref:`flux_surfaces_mng` can now diffuse due to molecular
+and turbulent diffusion processes, mimicking the behavior of real pollutants,
+for example.
+
+
+Model Setup
+=================================================
+
+Simulation units
+--------------------------------------------------------------------
+
+The :ref:`unitsms` system must now be fully defined, including temperature.
+Standard unit systems are provided. Additionally, the user can define units
+for mass, time and length from a selection of options, allowing for customized
+and convenient units The user must also specify whether pressures are defined
+in gauge or absolute units. Default simulation units can be set in
+:ref:`preferences`. The full definition of the units allows |prodv| to define
+default values for physical quantities as well as set universal constants,
+thus minimizing the amount of work required by the user.
+
+Shallow water model 
+--------------------------------------------------------------------
+
+Manning's roughness in shallow water model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Manning's roughness coefficient has been implemented in the
+:ref:`shallowWaterFlowsMR` for the evaluation of the shear stress at the
+terrain surface. It complements the existing roughness model based on the size
+of surface imperfections, and can be used in combination with it. As with the
+standard roughness, the Manning's coefficient can be an attribute of a
+component, subcomponent, or can be imported from a terrain raster data set.
+
+Mesh generation
+^^^^^^^^^^^^^^^^^^^^^
+
+:ref:`meshingms` setup for the vertical direction has been simplified by
+requiring only the definition of the bottom and top boundary coordinates.
+
+Component transformations
+--------------------------------------------------------------------
+
+Users can now apply rotational, translational and scaling transformations to
+components consisting of multiple subcomponents, simplifying the process of
+setting up of complex geometry assemblies. For a :ref:`gmoBasicsMR` component,
+these transformations can be applied to the body-fitted coordinate system so
+that it is aligned with the component's symmetry axes.
+
+Changing the number of threads at runtime
+--------------------------------------------------------------------
+
+The ability to change the number of threads used by the solver during
+simulation has been added to the :guilabel:`Runtime Options` dialog, allowing
+the user to add threads as they become available, or reduce their number if
+resources are needed for another task.
+
+Probe-controlled heat sources
+--------------------------------------------------------------------
+
+:ref:`activeSimulationControlMR` has been extended to heat sources associated
+with geometry components. The release of heat can now be controlled by history
+probes.
+
+Time-dependent temperature at sources 
+--------------------------------------------------------------------
+
+Fluid temperature at :ref:`massSourcesMR` and :ref:`MassMomentumMnG` can now
+be defined as a function of time using tabular input.
+
+Emissivity coefficients
+--------------------------------------------------------------------
+
+Emissivity coefficients for radiative heat transfer to voids are now defined
+directly, instead of requiring the user to specify the product of emissivity
+and the Stefan-Boltzmann constant. The latter is now automatically set by the
+solver, based on the units system.
+
+Reference temperature input
+--------------------------------------------------------------------
+
+An input reference temperature with the default of 0 degrees C in equivalent 
+simulation units is used as the default value for all initial, boundary and 
+source temperatures (fluid, solid and particles).
+
+Temperature-dependent electric conductivity
+--------------------------------------------------------------------
+
+Electric conductivity is now allowed to be a function of temperature, similar 
+to other fluid properties.
+
+Maximum number of electric charge-field iterations
+--------------------------------------------------------------------
+
+An input variable has been added for users to set the maximum number of electric
+charge-field iterations, with a default of 20.
+
+Contact line pinning
+--------------------------------------------------------------------
+
+A contact line pinning attribute has been added to components and subcomponents, 
+similar to the contact angle wetting condition.
+
+
+Output
+=================================================
+
+1. Flow velocities can now be output to :guilabel:`Selected Data` when using the constant velocity field solver option.
+#. Torque on geometry components due to wall adhesion is output to :guilabel:`General History Data` as a separate quantity, in addition to the existing output of wall adhesion forces.
+#. Shear velocity and y+ are automatically output to :guilabel:`Selected Data` along with turbulent energy and dissipation, when turbulence model output is requested.
+#. Several quantities have been added to the :ref:`airEntrainmentMR` model output. The volume flux of entrained air and of escaping air in every cell containing free surface is output to Restart and Selected data, providing the user with detailed information of where and when air is being entrained and detrained. The time- and space-integrated equivalents of those two quantities in the whole computational domain, as well as for each Sampling Volume, are output to the :guilabel:`General History data`.
+#. The final size of the solver's output file, flsgrf, is reported at the end of the simulation.
+#. For two-fluid simulations, the existing output quantities fluid residence time and distance traveled by fluid are now computed separately for fluid #1 and #2 and for the mixture of the fluids.
+#. For :ref:`particle_setup_mass`, the total volume and mass of each species are computed and output to :guilabel:`General history` for the whole computational domain, Sampling Volumes and Flux Surfaces, complementing the current output for the particle species counts. 
+#. The :guilabel:`last local gas pressure` has been added as an :guilabel:`Optional Output` quantity to help the user identify gas entrapment and to assist in designing the venting system in fuel tanks, for example. That quantity records the last void pressure in a cell before it is filled with fluid and is used in combination with the :ref:`adiabaticBubblesMR`.
+#. The total evaporation and condensation mass transfer are now output to :guilabel:`General History Data` as a separate quantity, in addition to the existing net mass transfer.
+
+New Customizable Source Routines
+===================================
+
+New user-customizable source routines have been added and can be accessed in
+the user's development environment.
+
+.. tabularcolumns:: |p{3.0cm}|p{10cm}|
+
+.. list-table::
+   :widths: 20 65
+   :header-rows: 1
+   :class: longtable
+   
+   * - Source routine name
+     - Description
+
+   * - cav_prod_cal
+     - Cavitation production and dissipation rates
+
+   * - sldg_uset
+     - Sludge settling velocity
+
+   * - phchg_mass_flux
+     - Mass flux due to evaporation and condensation
+
+   * - flhtccl
+     - Heat transfer coefficient between fluid #1 and #2
+
+   * - dsize_cal
+     - Coalescence and breakup rates for the dynamic droplet size model in two-phase flows
+
+   * - elstc_custom
+     - Source terms in the stress equations for viscoelastic fluids
+
+=================================================
+Redesigned user interface
+=================================================
+
+The |prodv| user interface has been completely redesigned, resulting in a
+modern, flat structure that dramatically streamlines the user workflow.
+
+  .. image:: images/whats-new/brand_new_interface.*
+ 
+Setup dock widgets
+==========================
+
+All setup operations, including :ref:`physicsMS`, :ref:`fluidsMS`, and
+:ref:`favorms`, have been converted into dock widgets around the geometry
+window, allowing :ref:`model_setup` to be condensed into a single tab. With
+this transition, the crowded collapsible trees from prior versions have been
+replaced with a much cleaner, more efficient menu presentation, providing
+users easy access to every parameter without ever leaving the
+:ref:`model_setup` tab.
+
+  .. image:: images/whats-new/setup_dock_widgets.*
+
+New icons - Setup
+==========================
+
+With our new :ref:`model_setup` design comes new icons, representing each step
+of the setup process.
+
+  .. image:: images/whats-new/new_icons_setup.*
+ 
+New icons - Physics
+==========================
+
+Our :ref:`physicsMS` icons are designed to be easily differentiated from one
+another at a glance, while providing clear visual representation of each
+model's purpose and use.
+
+  .. image:: images/whats-new/new_icons_physics.*
+
+RSS Feed
+==========================
+
+The :ref:`Sim_manager` tab has been revamped for |prodv|, starting with the
+new RSS Feed. Upon launching |prodv|, users are now greeted with the latest
+news, events, and blog posts from Flow Science.
+
+  .. image:: images/whats-new/rss_feed.*
+ 
+Configurable Simulation Monitor
+===================================
+
+An important task when running simulations is monitoring them. In |prodv| the
+:ref:`Sim_manager` has increased plotting capabilities to help the user better
+monitor their simulations. The user can select from all available
+:guilabel:`General history data` variables to monitor via the simulation
+runtime graphs and can add multiple variables to each graph.
+:guilabel:`General history data` available at runtime now includes:
+
+1. Minimum/maximum fluid temperatures 
+#. Temperatures at probe locations
+#. Flow rates at flux surface locations
+#. Simulation diagnostics (e.g., time step, stability limits)
+
+  .. image:: images/whats-new/large_dam.*
+
+  .. image:: images/whats-new/runtime_plots.*
+
+
+Conforming Mesh Visualization
+===================================
+
+Users can now visualize conforming mesh blocks via the new :ref:`favorms` dock
+widget.
+
+  .. image:: images/whats-new/conforming_mesh_vis.*
+
+Large raster and STL data
+==================================
+
+Processing large :ref:`rasterfilesms` geometry data can often be painstaking,
+due to the amount of time it takes for the data to be processed. While
+processing large geometry data can still take a significant amount of time,
+|prodv| now loads these large data sets as background tasks, allowing the user
+to continue working in a fully responsive, uninterrupted interface while their
+data is being processed.
+
+
+================
+FlowSight
+================
+
+Spline clips
+===================================
+
+Spline clips created by "extruding" a spline in a directional manner to
+produce a 2D surface part.
+
+   .. image:: images/whats-new/example_spline_clip.*
+
+   |
+
+Directional Scaling of Views
+===================================
+
+Directional scaling of viewport views has been implemented in :guilabel:`Views Manager` dialog.
+   
+   .. image:: images/whats-new/scaling_views.*
+
+   |
+
+History Data Annotations
+===================================
+
+:ref:`historyData` can be added as :guilabel:`Text`, :guilabel:`Dial` and :guilabel:`Gauge` annotations.
+   
+   .. image:: images/whats-new/history_annotations.*

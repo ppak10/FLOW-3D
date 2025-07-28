@@ -1,0 +1,1760 @@
+
+
+:tocdepth: 6
+
+###################################
+Tutorial / Quick Start 
+###################################
+
+.. index:: tutorial
+
+.. index::
+   single: FLOW-3D; how to use
+
+This chapter is intended to familiarize new users with major components of the
+|prod| Graphical User Interface (GUI) and to walk through the setup and running
+of various simulations. The exercises in this chapter are intended to cover
+the basics of using |prod|. New users are advised to work through all of the
+problems and the variations. The tutorial problems were chosen to illustrate a
+variety of topics and address a number of questions that might be encountered.
+This tutorial should be used while you are sitting at your computer running
+|prod|.
+
+A brief section on the :ref:`CFDPhilosophy` is followed by an introduction to
+the :ref:`SimulationFilenames` and ways to run simulation files. After those
+introductory sections there is a discussion of how to navigate the
+:guilabel:`Simulation Manager`, a basic description of how to set up a model,
+run simulations, and post-process results.  More information on each of these
+steps can be found in the  :doc:`model-setup`, :doc:`simulate`, and
+:doc:`postprocessing` chapters.
+
+.. index:: CFD
+
+.. _CFDPhilosophy:
+
+===============================
+Philosophy for Using CFD
+===============================
+
+Computational Fluid Dynamics (CFD) is a computer solution of the governing
+equations for fluid flows (the conservation of mass, momentum, and energy) in
+up to three dimensions. The specified governing equations are discretized and
+solved using the  numerical methods described in the :doc:`theory` chapter.
+
+Using CFD software is in many ways similar to setting up an experiment. If the
+experiment is not set up correctly to simulate a real-life situation, then the
+results will not reflect the real-life situation. In the same way, if the
+numerical model does not accurately represent the real-life situation, then
+the results will not reflect the real-life situation. The user must decide
+what things are important and how they should be represented. It is essential
+to ask questions before starting, including:
+
+* What do I want to learn from the calculation?
+* What is the scale and how should the mesh be designed to capture important phenomena? 
+* What kinds of boundary conditions best represent the actual physical situation? 
+* What kinds of fluids should be used?
+* What fluid properties are important for this problem? 
+* What other physical phenomena are important?
+* What should the initial fluid state be?
+* What system of units should be used? 
+
+It is important to ensure that the problem being modeled represents the actual
+physical situation as closely as possible. We recommend that users try to
+break down complex simulation efforts into digestible pieces. Start with
+a simple, easily understood approximation of your process and work it
+through before moving on to incrementally add more complicating physical effects.
+Simple hand calculations (Bernoulli's equation, energy balance, wave speed propagation,
+boundary layer growth, etc.) help with selecting physics and parameters and provide
+checks to compare with results.
+
+Understanding the strengths and weaknesses of CFD can also help guide
+an analysis.  CFD is an excellent analysis option when:
+
+* Standard engineering calculations are not practical due to the complexity of the 
+  geometry, physics, or the required level of detail.
+* Physical experiments are expensive  
+* More information about the flow is needed than can be gathered from an experiment
+* Accurate experimental measurements are hard to obtain due to dangerous or hostile
+  conditions, processes that do not scale well, etc.
+* Communicating complex flow information
+
+CFD is less effective when:
+
+* The scales of interest vary by several orders of magnitude since solutions
+  require significant computational resources, assumptions to reduce the 
+  domain size, or semi-empirical models to account for unresolved physical
+  phenomena.
+* The important physical phenomena are unknown since these are inputs to 
+  the CFD simulation.
+* The physical phenomena are poorly understood or extremely complex because
+  the governing equations tend to be semi-empirical or have limited ranges
+  of applicability.  
+
+There are a few other important notes to keep in mind when using CFD:
+
+* CFD is a numerical solution of the specified governing equations 
+  subject to the prescribed initial and boundary conditions.
+  As such, it is critical that the model setup - i.e. what equations
+  are to be solved, the material properties, the initial conditions,
+  and the boundary conditions - all match the physical situation
+  as closely as possible.
+* Numerical solutions of equations usually require approximations
+  of some kind.  It is prudent to review the assumptions and 
+  solution method for a physical model before using it.
+* Digital computers are subject to rounding errors related to
+  how numbers are represented in binary with finite precision.  
+  Try to avoid situations where the differences of very similar
+  numbers must be computed since this exacerbates the problem.
+  An example situation of this is when the simulation domain
+  is located far from the origin.
+
+
+.. index:: filenames, prepin, input file, flsgrf
+
+.. index::
+   single: simulation; filenames
+
+.. _SimulationFilenames:
+
+===================================
+Important files
+===================================
+
+There are many files associated with a |prod| simulation; the most important
+ones are described below.  All files have a naming convention like 
+:file:`prepin.*` where ``prepin`` is the file type and the ``*``
+is the simulation name, e.g. ``prepin.example_simulation``.
+
+* :file:`prepin.*`:  This is the input file for the simulation.  It contains
+  all of the input variables that describe the simulation setup.
+* :file:`prpgrf.*`:  This is the preprocessor output file.  It contains
+  the computed initial conditions and can be used to check the setup
+  before running the simulation.
+* :file:`flsgrf.*`:  This is the solver output file.  It contains
+  the final results of the simulation.  
+* :file:`prperr.*`, :file:`report.*`, :file:`prpout.*`: These are 
+  :ref:`PrpDiagnosticFiles`.
+* :file:`hd3err.*`, :file:`hd3msg.*`, :file:`hd3out.*`: These are 
+  :ref:`Hd3DiagnosticFiles`.
+
+Using descriptive simulation names is a good idea, as is keeping all
+simulation files together in a single folder. However, keep in mind that
+extremely long file names can be problematic depending on the operating
+system.
+
+.. note:: 
+   * If the simulation name is ``inp`` (i.e. the input file is :file:`prepin.inp`)
+     then the output and diagnostic files will all have the name ``.dat``, 
+     e.g. :file:`flsgrf.dat`.
+   * It is **strongly** recommended that all input files be stored in a local
+     directory on the machine instead of a network location.  The solver will
+     run faster, the GUI will be more responsive, and it eliminates the possibility
+     of a network problem interfering with a running simulation.
+
+
+
+.. index::
+   pair:  Tutorial; Simulation Manager
+
+.. _simulation_manager_tut:
+
+=====================================
+Simulation Manager
+=====================================
+
+The :guilabel:`Simulation Manager` is a tab in |prod| that is primarily used to
+organize simulations, run simulations, and show status information on running
+simulations.
+
+
+Workspaces
+=====================================
+
+:guilabel:`Workspaces` are an integral part of the :guilabel:`Simulation
+Manager`  and the way that files are handled in |prod|.  They are essentially
+folders that contain and organize simulations.  For example, it is possible to
+have a  workspace called *Examples* that contains several example simulations
+and another workspace called *Validations* that contains different validation
+cases, as shown below:
+
+  .. image:: images/tutorial/V12_portfolio.*
+    :alt: workspaces in the portfolio
+ 
+.. _sim_mgr_tut_workspace:
+
+Creating a new workspace
+=====================================
+
+For this tutorial, let's create a workspace to contain the simulations that we will be creating:
+
+1. Go to :menuselection:`File-->New workspace`
+#. Enter ``Tutorial`` as the workspace name.
+#. The default location will be in the current user's home directory. 
+   You could locate it elsewhere, but the default location will be fine for our purposes. 
+#. Make sure that the :guilabel:`Create subdirectory using workspace name` box is checked. 
+   This will create a new subdirectory for the workspace in the file system, 
+   making it much easier to organize simulation files.
+
+   .. image:: images/tutorial/V12_New_Workspace_Prompt.*
+      :alt: creating a new workspace
+
+#. Press :guilabel:`OK` to create the new workspace.  
+   You will now see it appear in the :guilabel:`Portfolio`.
+
+   .. image:: images/tutorial/V12_Portfolio_Workspace.*
+      :alt: creating a new workspace
+
+
+Closing a workspace
+=====================================
+
+Sometimes it is convenient to close a few workspaces to clean up 
+the :guilabel:`Portfolio` and make it easier to navigate.  Note that 
+closing a workspace simply removes it from the :guilabel:`Portfolio`;
+it does not delete the workspace from the computer.  To close a workspace:
+
+1. Right click on an existing workspace and choose :menuselection:`Close Workspace`.
+   Alternatively, you could select (left-click) a workspace in the :guilabel:`Portfolio`
+   and press the delete key.
+#. You will be asked to confirm that you want to close the workspace.  Choose :guilabel:`Yes`.
+#. The :guilabel:`Portfolio` will no longer contain the closed workspace.
+
+
+Opening an existing workspace
+=====================================
+
+There will probably be a time where you need to open an old workspace.  
+For example, you may want to review the setup of an existing simulation 
+before creating a similar one for a new project.  To open an existing workspace:
+
+1. Choose :menuselection:`File-->Open Workspace...`
+#. Browse to the directory that contains the workspace file.  In this case, look for :file:`Tutorial.FLOW-3D_Workspace`.
+
+   .. image:: images/tutorial/V12_Open_existing_workspace.*
+      :alt: opening a workspace
+ 
+#. Press :guilabel:`OK` to load the workspace.
+
+
+
+Working with simulations in a workspace
+====================================================
+
+Now that we know how to use a workspace, let's add some simulations to it.
+
+.. _sim_mgr_add_example:
+
+Add an example
+---------------------------------
+
+The simplest way to add a working simulation to a workspace is to add 
+one of the included example simulations.  These are simple, 
+fast-running simulations that are designed to illustrate how to 
+use different features in |prod|.  To add an example to an existing workspace:
+
+1. Highlight the desired workspace in the :guilabel:`Portfolio`
+#. Choose :menuselection:`File-->Add example...`.  Alternatively, you can right-click 
+   on the workspace and choose :menuselection:`Add example...`
+#. Select an interesting-sounding example in the :guilabel:`Examples` dialog and 
+   press :guilabel:`Open`. I chose the :menuselection:`Natural Convection` example.
+ 
+   .. image:: images/tutorial/V12_Add_Example.*
+      :alt: add example simulation
+
+#. This opens the :guilabel:`New Simulation` dialog.   
+#. The default simulation name and location should be fine, because it is recommended to
+   ensure the directory is in the workspace location. |prod| will place all of the 
+   simulation files in a separate subdirectory in this workspace directory that we 
+   named here, making file organization much easier.
+#. Select the unit system for the simulation. Standard unit systems are recommended,
+   but a Custom unit system can be chosen for independent selection of each unit.
+#. Press :guilabel:`OK` to add the new simulation to our workspace.
+
+   .. image:: images/tutorial/V12_Portfolio_ExampleSim.*
+      :alt: simulation in workspace
+ 
+.. _sim_mgr_remove_sim:
+
+Removing a simulation from a workspace
+------------------------------------------------------------------
+
+It is occasionally necessary to remove a simulation from a workspace 
+(this just removes the simulation from the workspace; it does not 
+delete the simulation from the computer).  To remove a simulation 
+from a workspace:
+
+1. Right click on an existing simulation in the workspace
+   (in this case use the example that you added in the previous section)
+   and choose :menuselection:`Remove Simulation`.
+   Alternatively, you could select (left-click) a simulation in the workspace and press the delete key.
+#. The workspace will no longer contain the simulation.
+
+.. _sim_mgr_delete_sim:
+
+Delete a simulation from all workspaces and disk
+------------------------------------------------------------------
+
+In addition to removing a simulation from the workspace, it may also be
+necessary to delete all of the simulation files from disk.  To remove a
+simulation from the workspace and also delete the simulation files from the
+disk:
+
+1. Right click on an existing simulation in the workspace
+   (in this case use the example that you added in the previous section)
+   and choose :menuselection:`Delete simulation from all workspaces and disk`.
+#. A window will appear that will allow the user to select which files from the 
+   simulation directory that are to be deleted. Select the desired files to be 
+   deleted and then press :menuselection:`OK` to delete these files, or 
+   press :menuselection:`Cancel` to abort the operation.
+
+#. If :menuselection:`OK` was selected, the workspace will no longer contain the 
+   simulation and all of the selected setup files will be deleted from the simulation directory.
+
+.. warning::  
+   This operation cannot be undone, so be sure that you want to delete these files before proceeding.
+
+.. _sim_mgr_add_existing:
+
+Adding an existing simulation to a workspace
+----------------------------------------------------- 
+
+To add an existing simulation to a workspace:
+
+1. Right-click on an open workspace and choose :menuselection:`Add Existing Simulation...`.
+   You can also select a workspace and then choose :menuselection:`File-->Add Existing Simulation...`
+#. Browse to the location of the :file:`prepin.*` file and choose :guilabel:`Open`.
+
+   .. image:: images/tutorial/V12_Add_Existing.*
+      :alt: add existing simulation to workspace
+ 
+#. The simulation will now appear in the workspace.
+
+
+.. _sim_mgr_tut_new_sim:
+
+Adding a new simulation to a workspace
+------------------------------------------------------------------
+
+Most of the time, you will be creating new simulations instead of 
+using existing ones.  To add a new simulation to a workspace:
+
+1. Right click on an existing workspace and choose :menuselection:`Add New Simulation...`.
+#. You will be prompted to enter a name for the simulation.  For this 
+   example, call it ``heat transfer example``.
+#. Then determine the :guilabel:`Units system` for the simulation using the drop-down list. The available options are 
+   :guilabel:`SI` with a basis of :guilabel:`Kg, m, s and coul` and :guilabel:`CGS` with a basis 
+   of :guilabel:`g, cm, s and scoul` for :guilabel:`Mass, Length, Time` and electric 
+   :guilabel:`Charge` respectively. :guilabel:`Engineering` units are also available and have a 
+   basis of :guilabel:`slug, ft, s` but no units for electric :guilabel:`Charge`. If none of these 
+   options are convenient, a :guilabel:`Custom` units system is available where the basis for 
+   :guilabel:`Mass, Length, Time` and electric :guilabel:`Charge` is customizable.
+#. The :guilabel:`Temperature` units should also be specified using the drop-down list. The available 
+   options are :guilabel:`Celsius` and :guilabel:`Kelvin` for :guilabel:`SI` and :guilabel:`CGS` units 
+   as well as :guilabel:`Fahrenheit` and :guilabel:`Rankine` for :guilabel:`Engineering` units. If the 
+   :guilabel:`Custom` units option is selected, the available :guilabel:`Temperature` units change 
+   depending on the basic units chosen for :guilabel:`Mass` and :guilabel:`Length`.
+
+   .. note::  
+      Choose the simulation units of the new simulation carefully. Once a set the units cannot be changed.
+
+5. The template used for this simulation will be the default template. A template is a
+   saved set of values that will apply the settings it contains to the new simulation. If 
+   another template needs to be used, click on the browse icon (|browse_icon_v12|) to pick from a list of available 
+   templates.
+#. The default simulation name and location should be fine, because it is recommended to
+   ensure the directory is in the workspace location. |prod| will place all of the 
+   simulation files in a separate subdirectory in this workspace directory that we 
+   named here, making file organization much easier. If you wish to save teh simulation at a 
+   different location, please use the the browse icon (|browse_icon_v12|) to navigate to 
+   the desired location.
+#. Click :guilabel:`OK` to add a new simulation called ``heat transfer example`` to the workspace.
+
+   .. image:: images/tutorial/Add_new_simulation_dialog_v12.*
+      :alt: Add new simulation
+
+Other options
+-------------------
+
+While we will not be using these options right now, it should be mentioned
+that right-clicking on a simulation gives access to additional options, the
+most commonly used of which are :menuselection:`Add Simulation Copy...` and
+:menuselection:`Add Restart Simulation...`.  The first option creates a copy
+of an existing simulation, while the second option copies an existing
+simulation and configures the restart options to use the results from the
+original simulation as the initial conditions for the restart simulation.
+
+.. seealso::
+   See the :ref:`Restarts` section in the :doc:`model-setup` chapter
+   for more information on restart simulations.
+
+
+.. index::
+   pair:  Tutorial; Preprocessing
+   pair:  Tutorial; Running simulations
+
+.. _sim_mgr_run_tut:
+
+Preprocessing and running simulations
+==========================================================================
+
+
+Preprocessing a simulation
+-------------------------------
+
+Preprocessing a simulation computes the initial conditions and runs some
+diagnostic tests on the input file.  It is useful when you want to confirm that
+the problem is configured correctly or if you need some diagnostic information from
+the preprocessor.  You do not need to preprocess a simulation before running
+it. To preprocess a simulation:
+
+1. Right-click on a simulation in the workspace and choose :guilabel:`Preprocess Simulation-->Local`.  
+   For this case, choose the example problem in the workspace since
+   the input file ``heat transfer example`` has not yet been fully defined.
+#. The preprocessor should start, print some information in the text window at 
+   the bottom of the :guilabel:`Simulation Manager`, and then complete successfully.  
+   The icon next to the simulation name in the :guilabel:`Portfolio` will also 
+   change to indicate that the simulation preprocessed successfully.
+
+.. seealso::  See the :ref:`preprocessing` section in the :doc:`simulate`
+   chapter for more information.
+  
+
+Running a simulation
+-------------------------------
+
+Running a simulation solves the governing equations for the problem (physical
+models, geometry, initial conditions, boundary conditions, etc.) that is
+defined in the input file.  To run a simulation:
+
+1. Right-click on a simulation in the workspace and choose :menuselection:`Run Simulation-->Local`.
+   For this case, choose the example problem in the workspace since the input
+   file ``heat transfer example`` has not yet been fully defined.
+#. The solver will start, print some information in the text window at the bottom
+   of the :guilabel:`Simulation Manager`, update the plots, and then complete successfully.  
+   The icon next to the simulation name in the :guilabel:`Portfolio` will also 
+   change to indicate that the simulation ran successfully.  
+   You will also see the simulation appear in the :guilabel:`Queue` while the solver is running, 
+   then disappear when it completes.
+
+.. seealso::  See the :ref:`solving` section in the :doc:`simulate`
+   chapter for more information on running a simulation and reading
+   the diagnostics.   
+
+ 
+Running all simulations in a workspace
+---------------------------------------------- 
+
+You can also run all simulations in a workspace by right-clicking on a
+workspace and choosing :menuselection:`Simulate Workspace-->Local`.
+
+.. seealso::  See the :ref:`solving` section in the :doc:`simulate`
+   chapter for more information.
+
+
+.. index::
+   pair:  Tutorial; Queue
+
+The queue
+=====================================
+
+A simulation is automatically added to the bottom of the queue when it is
+submitted to preprocess or run.  The simulation is then preprocessed or run
+when the solver has an available license and computational resources.
+Simulations that are in the queue but are not yet preprocessing or running can
+be reordered or removed from the queue using the controls at the bottom of the
+queue.
+
+
+.. seealso::  See the :doc:`simulate` chapter for more information.
+ 
+
+Finding files in the file system
+=====================================
+
+If you need to access the files in the file structure for some reason (perhaps
+to place an :file:`*.STL` file in the folder), you can click on the displayed
+path to the :guilabel:`Simulation Input File` to go to the corresponding
+location in the file system.
+ 
+   .. image:: images/tutorial/file-links.*
+      :alt: links to files
+
+.. index::
+   pair:  Tutorial; Model Setup
+
+.. _model_setup_tut:
+
+=====================================
+Model Setup
+=====================================
+
+The :doc:`model-setup` tab is where the input parameters for the  currently-
+selected simulation on the :ref:`simulation_manager_tut` are defined.  This
+includes :ref:`ms_general_tut` settings, :ref:`ms_physics_tut` models,
+:ref:`ms_fluids_tut`, :ref:`mng_geom_tut`, :ref:`mng_meshing_tut`,
+:ref:`mng_compprops_tut`, :ref:`mng_ics_tut`, :ref:`mng_bcs_tut`,
+:ref:`ms_output_tut` options, and :ref:`ms_numerics_tut`.
+
+This section will guide you through the setup of a simple, albeit somewhat
+contrived, example simulation showing the the thermal plume (bottom) generated
+by a  heated copper block (top; red) on a bed of sand (top; blue) submerged in a stream
+of water.
+
+  .. image:: images/tutorial/tutorial-results.*
+     :alt: example problem
+
+This tutorial is not intended to be a comprehensive discussion of how the methods or
+models work,  why an option was selected, etc. - it's just a quick overview of
+what needs to be done to set up this specific simulation.  The details of the
+methods/models and reasoning for what is done here can be found in the other
+chapters of the user manual.
+
+To begin, create a new workspace and add a new simulation.  See
+:ref:`sim_mgr_tut_workspace` and :ref:`sim_mgr_tut_new_sim` for guidance on
+how to do this.
+
+.. index::
+   pair:  Tutorial; Navigation
+
+.. _mng_navigation_tut:
+
+Navigation
+============== 
+
+Model setup is performed primarily through navigation of the first nine icons
+outlined in red. Each icon opens a widget for configuring a particular aspect
+of the simulation. The following sections starting at Global and ending at
+Numerics help demonstrate the purpose of each widget.
+
+  .. image:: images/tutorial/navigation.*
+     :alt: Navigation icons for defining various aspects of a simulation
+
+.. index::
+   pair:  Tutorial; General settings
+   pair:  Model Setup; General
+
+.. _mng_controls_tut:
+
+Controls
+============== 
+
+Listed here are the mouse controls used in the graphical display areas of the
+|prod| user interface:
+
+  .. tabularcolumns:: |p{2.0cm}|p{1.5cm}|p{1.5cm}|p{5.0cm}|
+
+  .. list-table::
+     :widths: 20 20 20 60
+     :header-rows: 1
+     :class: longtable
+
+     * - BEHAVIOR
+       - BUTTON / KEY
+       - ACTION
+       - DESCRIPTION
+
+     * - Rotate
+       - Left
+       - Click and hold
+       - Click and hold the left-mouse button and move the
+         mouse in the :guilabel:`Meshing & Geometry` window. The model will rotate
+         accordingly.
+     * - Zoom
+       - Middle-button / Scroll wheel
+       - Scroll / click and hold
+       - Roll the middle wheel or click and hold the middle-mouse button while
+         moving the mouse forward and backward to zoom.
+     * - Pan
+       - Right
+       - Click and hold
+       - Click and hold the right-mouse button and move the mouse in the window. 
+         The model will move with the mouse.
+     * - Set focus on object
+       - N/A
+       - Hover cursor over object
+       - Hovering the curser over an object will activate the object for further manipulation
+         via the right-click menu.  The object will highlight as it is activated.  This is only done
+         when the :menuselection:`Tools-->Mouse Hover Selection` 
+         preference on the :guilabel:`Meshing & Geometry` tab is enabled.  
+     * - Select
+       - Left
+       - Double-click
+       - Double-clicking on an object will select and activate the object for further manipulation
+         via the right-click menu.  This is only enabled if the :menuselection:`Tools-->Mouse Hover Selection` 
+         preference on the :guilabel:`Meshing & Geometry` tab is disabled.               
+     * - Access object properties
+       - Right
+       - Click 
+       - Right-clicking on the highlighted object will present a list of 
+         options to identify the object, show/hide, enable/disable, adjust transparency, etc.    
+     * - Return cursor coordinates (probe)
+       - Left
+       - shift+click 
+       - Hold the Shift key to turn the cursor into a
+         target. Click while holding the Shift key to get the coordinate of a surface,
+         shown in the lower left-hand corner of the screen.
+     * - Place pivot point
+       - Left
+       - cntrl+click
+       - Hold the Ctrl key to turn the cursor into
+         the pivot icon. Click while holding the Ctrl key to set the pivot point. The
+         view will rotate around the pivot point. Toggle the :guilabel:`Custom Pivot` button
+         above the view pane to turn the pivot point off.
+
+There are also toolbar options which are helpful. To find out the purpose
+of any option, mouse-over the icon.
+
+  .. image:: images/tutorial/tutorial-controls.*
+     :alt: Controls on Meshing & Geometry tab
+
+.. _ms_general_tut:
+
+Global 
+====================
+
+To create a simulation for this tutorial, right-click on the desired workspace
+and choose, :guilabel:`Add New Simulation...`. Give it the name, 'heat transfer
+example' and add to a workspace as described earlier in the tutorial section
+:ref:`sim_mgr_tut_new_sim`. Choose SI and Kelvin as the :guilabel:`Units system` 
+and :guilabel:`Temperature` respectively. Remember that once set, the units 
+for the simulation cannot be changed.
+
+Click on the Global icon |f3d_global_icon| to open the :guilabel:`Global`
+widget. This is where the defined units are displayed and where simulation
+finish time is set. For this simulation set the finish time to 200 seconds.
+Important details about the simulation can be added here too in the Notes
+field.
+
+  .. image:: images/tutorial/tutorial-general.*
+     :alt: Global tab for example problem
+
+
+.. seealso::  See the :ref:`generalms` section of the :doc:`model-setup` chapter for more information.
+
+.. index::
+   pair:  Tutorial; Physics
+   pair:  Model Setup; Physics
+
+.. _ms_physics_tut:
+
+Physics
+====================
+
+Click on the Physics |f3d_models_icon| icon to open the Physics widget.
+
+  .. image:: images/tutorial/physics-widget.*
+     :alt: Physics widget for selecting models
+
+For this problem the default settings of :menuselection:`One fluid`,
+:menuselection:`Free surface or sharp interface`, and
+:menuselection:`Incompressible / Limited compressibility` are all correct.
+
+The relevant physical mechanisms (i.e. additional governing equations or terms
+in the governing equations) are defined on the :guilabel:`Physics` widget. To
+activate a model, left-click on the icon for that model and select
+'Activate'. For this simulation the following models need to be activated:
+
+* :guilabel:`Density evaluation`:  This model accounts for the variations in density
+  that create the thermal plume.  Choose :menuselection:`Density evaluated as a function of other quantities (e.g., temperature or scalars)`
+  and check the :guilabel:`Include volumetric thermal expansion` box.
+
+  .. image:: images/tutorial/tutorial-rho.*
+     :alt: Density evaluation model for example problem
+
+* :guilabel:`Gravity and non-inertial reference frame`:  This adds a body force 
+  representing gravity, so enter -9.81 for the :guilabel:`Z component` of gravity.
+
+  .. image:: images/tutorial/tutorial-grav.*
+     :alt: Gravity model for example problem
+
+* :guilabel:`Heat transfer`:  
+  This model accounts for heat transfer in and between the fluid and solid
+  objects. For this simulation choose :menuselection:`First order` for the
+  :guilabel:`Fluid internal energy advection` and check the box to enable
+  :menuselection:`Fluid to solid heat transfer`. The remaining options should
+  be left at their default values.
+
+  .. image:: images/tutorial/tutorial-ht.*
+     :alt: Heat transfer model for example problem
+
+* :guilabel:`Viscosity and turbulence`:  This model accounts for viscous stresses
+  in the fluid.  Check the :menuselection:`Viscous flow` option and leave the 
+  remaining options at their default values.
+
+  .. image:: images/tutorial/tutorial-visc.*
+     :alt: Viscosity model for example problem
+
+.. seealso::  See the :ref:`physicsMS` section of the :doc:`model-setup` chapter for more information.
+
+.. index::
+   pair:  Tutorial; Fluids
+   pair:  Model Setup; Fluids
+
+.. _ms_fluids_tut:
+
+Fluids
+====================
+
+The properties for :guilabel:`Fluids` are defined within the
+:guilabel:`Fluids` widget of the :menuselection:`Model Setup`  tab. The
+:guilabel:`Fluids` widget can be accessed by clicking the Fluids
+|f3d_fluids_icon| icon, on the vertical toolbar.  First make sure that
+:menuselection:`Fluid 1` is selected as the :guilabel:`Properties for` option.
+The properties  for :menuselection:`Fluid 1` can be entered manually, but a
+quick way to set the properties for common fluids is to  load them from the
+:ref:`matdbms` by clicking the :guilabel:`Load material properties` button,
+|matdatbas|. Next, browse to the desired material - in this case choose
+:menuselection:`Fluids-->Liquids-->Water_at_20_C` - and click
+:guilabel:`Load`.
+
+This simulation requires a property that is not in the database: the
+:guilabel:`Volumetric thermal expansion` coefficient.  In the
+:guilabel:`Density` sub-tab, enter :math:`207e-6`.   The final property set
+should look like:
+
+  .. image:: images/tutorial/tutorial-fluids.*
+     :alt: Fluid properties for example problem
+
+.. seealso::  See the :ref:`fluidsMS` section of the :doc:`model-setup` chapter for more information.
+
+.. index::
+   pair:  Tutorial; Meshing & Geometry
+   pair:  Model Setup; Meshing & Geometry
+
+.. _mng_geom_tut:
+
+
+Geometry
+====================
+
+Click on the Geometry |f3d_geometry_icon| icon to open the Physics widget.
+
+There are two geometries that need to be created for this simulation:  the
+copper block and the sand bed. Both be created using :ref:`primitives`; a more
+realistic simulation could use :ref:`primitives`, :ref:`stlfilesms`, and/or
+:ref:`rasterfilesms` to define the geometry.
+
+To create the copper block first click on the |box| icon.  This will create a
+rectangular subcomponent that extends between the specified limiters.  Make
+the copper block extend +/- 2 cm from the origin in the x and y directions and
+extend from 0 to 4 cm in the z-direction.  Leave the remaining options as they
+are to make the block solid and add it to a new component
+
+  .. image:: images/tutorial/tutorial-block.*
+     :alt: Copper block definition for example problem
+
+Choose :guilabel:`OK` to finish the subcomponent definition and move on to the
+component definition.   In the :guilabel:`Add component` dialog that
+automatically opened leave the :guilabel:`Type` as :menuselection:`General
+(solid)`, enter ``Copper block`` in the :guilabel:`Name` field, and choose
+:guilabel:`OK` to finish the component definition.
+
+Click on the |box| icon again to create the bed subcomponent.  Use the extents
+shown below and set the :guilabel:`Add to component` selection to
+:menuselection:`New Component (2)`.
+
+  .. image:: images/tutorial/tutorial-bed.*
+     :alt: Bed definition for example problem
+
+Choose :guilabel:`OK` to finish the subcomponent definition and move on to the
+component definition.   In the :guilabel:`Add component` dialog that
+automatically opened leave the :guilabel:`Type` as :menuselection:`General
+(solid)`, enter ``Bed`` in the :guilabel:`Name` field, and choose
+:guilabel:`OK` to finish the component definition.  The final geometries
+should look like what is shown below:
+
+  .. image:: images/tutorial/tutorial-geom.*
+     :alt: Geometry definition for example problem
+
+After adding a new component, a length scale is automatically created in the
+:guilabel:`Graphics Display Window` in both the horizontal and vertical
+directions.  This ruler tool can be used to quickly gauge the extents of
+generated geometrical objects.
+
+.. note::  
+   Only the geometry shape definitions are shown in the display area, so no
+   information about whether an object is a solid or a hole is shown.  This
+   can be done later after :ref:`mng_meshing_tut` using the |FAVORize| option.
+
+.. seealso::  See the :ref:`geometryms` section of the :doc:`model-setup` chapter for more information.
+
+
+.. _mng_compprops_tut:
+
+Component properties
+----------------------
+
+The heat transfer model requires some material properties in order to solve
+the conduction equation in the solid components.  These properties are set on
+the :guilabel:`Component Properties` widget which can be accessed from the
+|f3d_geometry_icon| icon.
+
+  .. image:: images/tutorial/tutorial-compprops.*
+     :alt: Component properties widget
+
+Each component must have :menuselection:`Solid Properties` and
+:menuselection:`Surface Properties` defined.  To set these for the copper
+block first select the :menuselection:`Component 1: Copper Block` component in
+the :guilabel:`Geometry` widget.  Then select :menuselection:`Solid
+Properties` in the :guilabel:`Component Properties` widget and define the
+properties as shown below:
+
+  .. image:: images/tutorial/tutorial-copper-solid.*
+     :alt: Copper block solid properties
+
+It is possible to use an alternative method for defining the
+:guilabel:`Component Properties`, described here for the second component (the
+bed).  In this approach start by clicking on :menuselection:`Component 2: Bed`
+component and choosing :menuselection:`Load material properties` |matdatbas|
+icon next to the :guilabel:`Material` field.  Next, browse to the material -
+in this case choose :menuselection:`Solids-->Sands-->Sand_Quartz` and choose
+:guilabel:`Load`.
+
+  .. image:: images/tutorial/tutorial-bed-matprops.*
+     :alt: Bed solid properties
+
+.. seealso::
+   * See the :ref:`fluidsMS` section of the :doc:`model-setup` chapter for more information.
+   * See the :doc:`model-reference` chapter for more information on what properties 
+     are required for a given physical model.
+
+.. _mng_meshing_tut:
+
+Meshing
+====================
+
+The mesh is created and defined on the :guilabel:`Mesh` widget, which is
+accessed via the |f3d_mesh_icon| icon.  Press the |add_icon| to add a new
+mesh. To quickly adapt the extents of the mesh to the geometry select the
+:menuselection:`Fit to geometry` radio button and leave the offset radio
+button on :guilabel:`As a percent`. Set the cell size under :guilabel:`Block
+properties` to 0.004.
+
+  .. image:: images/tutorial/tutorial-fit-mesh.*
+     :alt: Fit mesh block to geometry
+
+The top of the mesh needs to be extended upward in the z-direction. Select the :guilabel:`Z-Direciton` tab and enter 0.2 for Mesh Plane 2. 
+
+  .. image:: images/tutorial/tutorial-mesh-def.*
+     :alt: z height adjustment
+
+This simulation is going to be a 2D. Follow the same process to set the
+:guilabel:`Y-Direction` extents to -0.005 and 0.005. And set the
+:guilabel:`Total cells` to 1.
+
+  .. image:: images/tutorial/tutorial-mesh-def2.*
+     :alt: y mesh plane adjustments
+
+The final mesh can be viewed in different ways by changing options in the
+:menuselection:`Mesh-->Flow Mesh-->View mode` drop-down menu just above the
+:guilabel:`Graphics Display Window`.  The :menuselection:`Grid lines` option
+will show every grid line, the :menuselection:`Mesh Planes` option will show
+only :guilabel:`Mesh Planes`, and the :menuselection:`Outline` option only
+shows the extents of the mesh.
+
+Additionally, how the solver will perceive the final geometry in the mesh can
+be viewed with the |FAVORize| icon.  This will convert the geometry
+definitions  into the area fractions and volume fractions using the |favor|
+algorithm.  To do so, click on the |FAVORize| icon and then choose
+:guilabel:`Generate`.
+
+  .. image:: images/tutorial/tutorial-FAVOR.*
+     :alt: FAVOR
+
+After a few moments the following should be shown, where the gray area
+indicates solid material.
+
+  .. image:: images/tutorial/tutorial-FAVOR-result.*
+     :alt: FAVORized result
+
+.. seealso::  
+   * See the :ref:`meshingms` section of the :doc:`model-setup` chapter for 
+     more information on meshing.
+   * See the :ref:`favorcheck` section of the :doc:`model-setup` chapter 
+     for more information on |favor| and the |FAVORize| option.
+
+.. _mng_bcs_tut:
+
+Boundary conditions
+====================
+
+|prod| automatically applies the appropriate boundary condition(s) on
+components based on the component type and the active physical models.
+However, the boundary conditions on the faces of the mesh block(s) must be set
+manually for each mesh block in the :guilabel:`Boundary Conditions` widget
+(|f3d_bc_icon|). For this tutorial, three of the boundary conditions need to
+change from the default :menuselection:`Symmetry` condition: the :guilabel:`X
+Min`, :guilabel:`X Max`, and :guilabel:`Z Max` boundaries.
+
+* **X Min**:  
+  
+  * Click on the :guilabel:`X Min` listing under the :guilabel:`Boundaries` section
+    of the :guilabel:`Boundary Condtions` widget. Set the :guilabel:`Boundary type`
+    to :menuselection:`Velocity` and enter 0.001 for the X velocity.
+
+    .. image:: images/tutorial/tutorial-xmin.*
+       :alt: XMIN boundary condition
+
+  * Next, change the drop-down box from :menuselection:`Use fluid fraction` 
+    to :menuselection:`Use fluid elevation` and set the :guilabel:`Fluid elevation`
+    to be 0.15.
+  * Lastly, set a temperature of 298K.
+
+    .. image:: images/tutorial/tutorial-xmin2.*
+       :alt: XMIN boundary condition
+
+* **X Max**:
+
+  * Click on the :guilabel:`X Max` listing under the :guilabel:`Boundaries` section 
+    of the :guilabel:`Boundary Condtions` widget. Set the :guilabel:`Boundary type`
+    to :menuselection:`Pressure` and enter 0 for the :guilabel:`Pressure`.  
+  * Next, change the drop-down box from :menuselection:`Use fluid fraction` 
+    to :menuselection:`Use fluid elevation` and set the :guilabel:`Fluid elevation`
+    to be 0.15.
+  * Lastly, set a temperature of 298K.
+
+    .. image:: images/tutorial/tutorial-xmax.*
+       :alt: XMAX boundary condition
+
+..
+
+* **Z Max**:
+
+  * Click on the :guilabel:`Z Max` listing under the :guilabel:`Boundaries` section
+    of the :guilabel:`Boundary Condtions` widget. Set the :guilabel:`Boundary type`
+    to :menuselection:`Pressure` and enter 0 for the :guilabel:`Pressure`. 
+  * Next, set the :guilabel:`Fluid fraction` to be 0.0.
+  * Lastly, set a temperature of 298K.
+
+    .. image:: images/tutorial/tutorial-zmax.*
+       :alt: ZMAX boundary condition
+
+.. seealso::  See the :ref:`SettingBCs` section of the :doc:`model-setup` chapter for more information.
+
+.. _mng_ics_tut:
+
+Initial conditions
+====================
+
+The :ref:`ICs` need to be set for both the solid objects (the components) and the 
+fluid inside of the domain:
+
+* **Components**: 
+  The only initial condition required for the solid objects in this
+  simulation is the initial temperature.  This is set  in the :guilabel:`Component
+  Properties` widget for each component in a similar manner to what was done for
+  the :ref:`mng_compprops_tut`.  Following the same approach as was used before
+  when setting the :ref:`mng_compprops_tut`, set the initial temperature of
+  :menuselection:`Component 1: Copper Block` to 350K and the initial temperature
+  of :menuselection:`Component 2: Bed` to 298K.
+
+  .. image:: images/tutorial/tutorial-component-ics.*
+     :alt: Fluid initial conditions
+
+..
+
+* **Fluid**: 
+  There is a little more to set for the initial conditions of the fluid. In this
+  case the fluid configuration, temperature, velocities, and pressure distribution
+  all need to be set. The fluid initial conditions are set on the
+  :guilabel:`Initial` widget, opened by clicking on the Initial |f3d_initial_icon|
+  icon.
+
+  Select the :guilabel:`Fluid` listing and set the pressure to
+  :menuselection:`Hydrostatic pressure`. Set the temperature to 298K and
+  the x, y and z velocities to 0.0.
+
+  .. image:: images/tutorial/tutorial-fluid-ics.*
+     :alt: Fluid initial conditions
+
+..
+
+  Next, choose the :guilabel:`Height/Volume` listing and the
+  :menuselection:`Use fluid elevation` dropdown. Set the
+  :menuselection:`Fluid at height` to 0.15.
+
+  .. image:: images/tutorial/tutorial-fluid-ics2.*
+     :alt: Fluid initial conditions continued
+
+..
+
+.. seealso::  See the :ref:`ICs` section of the :doc:`model-setup` chapter for more information.
+
+.. index::
+   pair:  Tutorial; Output
+   pair:  Model Setup; Output
+
+.. _ms_output_tut:
+
+Output
+====================
+
+There are seven data types in |prod|; options controlling what data will be
+written to the results file and how frequently are set on the
+:guilabel:`Output` widget found by clicking on the  Output |f3d_output_icon|
+icon. The different data types are:
+
+* **Restart**: All flow variables. Default output frequency = 1/10th of the
+  simulation time.
+* **Selected**: Only user selected flow variables. Default output frequency =
+  1/100th of the simulation time.
+* **History**: Data showing the variation in one variable vs. time.  
+  Examples would include the time step size, mean kinetic energy,
+  flow rates at baffles, etc.
+  Default output frequency = 1/100th of the simulation time.
+* **Short print**:  Text diagnostic data written to the :file:`hd3msg.*` file.
+  Default output frequency = 1/100th of the simulation time.
+* **Long print**: Text diagnostic data written to the :file:`hd3out.*` file.
+  Default output frequency = 1/10th of the simulation time.
+* **Solidification**: Only available if the solidification model is active.
+* **FSI TSE**: Additional output options for deformable solids.
+
+The default output rates will
+generally be adequate for this simulation.   However, some additional
+configuration of the :guilabel:`Selected Data` will be beneficial.  Set the
+:guilabel:`Selected data interval` to 0.5 and then check the boxes next to the
+:menuselection:`Fluid temperature`, :menuselection:`Fluid velocities`,
+:menuselection:`Macroscopic density`, and :menuselection:`Wall temperature`.
+This will output these quantities every 0.5 seconds.
+
+  .. image:: images/tutorial/tutorial-output.*
+     :alt: Output tab setup
+
+.. seealso::  See the :ref:`dataOutput` section of the :doc:`model-setup` chapter for more information.
+
+
+.. index::
+   pair:  Tutorial; Numerics
+   pair:  Model Setup; Numerics
+
+.. _ms_numerics_tut:
+
+Numerics
+====================
+
+The default numerical options work well for most simulations so, in the
+absence of a compelling reason to deviate from the default options, it's best
+to leave them alone for now.  
+
+This concludes the setup of the example problem
+that was started in the :ref:`model_setup_tut` section.  It is now ready to
+run, so follow the steps in :ref:`sim_mgr_run_tut` to run the simulation.
+
+.. seealso::  See the :ref:`numericsMS` section of the :doc:`model-setup` chapter for more information.
+
+.. index:: checklist
+.. _checklist:
+
+
+Checklist for General Simulation Setups
+==========================================
+
+A high-level outline of the necessary steps to set up a simulation is given below.
+It's not a comprehensive list - just a quick guide covering the typical steps, 
+some important things to consider, and a suggested order for the setup.
+
+.. index:: 
+   single: Checklist; Before starting
+
+Before starting
+--------------------------------------------------
+
+1. **Draw and annotate a diagram of the physical problem**:
+   This diagram should include geometric dimensions, the location of the
+   fluid(s), any relevant body forces, velocities of moving objects, relevant
+   heat transfer mechanisms, etc.  The completed diagram should be an image of
+   the physical problem with all of the relevant engineering information about
+   the problem.
+#. **Determine a modeling approach**:
+   Decide how to approach the problem using the annotated diagram as a guide.
+   Start by figuring out how many fluids are in the problem, if they are
+   miscible, if it is necessary to solve equations in more than one fluid, and
+   if compressibility is important.  Then decide which physical mechanisms are
+   important.  Add the relevant engineering information for each of these
+   options (e.g. fluid types, heat transfer mechanisms, etc.) to the diagram.
+   Try to justify why physical mechanisms were included or ignored – this
+   helps catch mistakes early in the simulation process when they require
+   little time to fix.
+#. **Draw the computational domain on the diagram and describe the physical 
+   situation on the edges of the computational domain**:
+   Write which boundary condition type best represents the physical situation
+   at the boundary. If none of the available boundary condition types are a
+   reasonable approximation of the physical situation at the boundary then
+   this boundary must be moved to elsewhere.
+
+.. index:: 
+   single: Checklist; General settings
+
+Model setup: General
+--------------------------------------------------
+
+#. **Add some notes describing the problem, the purpose of the simulation, the case number, etc.**:
+   Notes help explain and justify the setup for future users or for later reference.  It should discuss 
+   the purpose of the simulation, the analysis approach, etc. 
+#. **Choose which solver and how many processors to use**
+#. **Choose the unit system**:
+   Use small units (e.g. mm-gm-msec) for modeling small scale problems and large units 
+   (e.g. SI) for larger scale problems.   This helps avoid round-off errors due to machine precision.
+#. **Select the number of fluids, interface tracking option, and flow mode**:
+   Use the annotated diagram as a guide for this step.
+   The number of fluids refers to whether the equations governing the
+   conservation of mass, momentum, and energy are to be solved in regions
+   where the fluid fraction :math:`f>0` (representing fluid one) or where the fluid
+   fraction :math:`f \geq 0` (fluid 1 and fluid 2).  The interface tracking options define
+   whether changes in the fluid fraction should be sharp or diffuse, while the
+   flow mode defines how regions where :math:`f=0` are treated in two fluid problems.
+#. **Define the finish condition(s)**:
+   Choose when to end the simulation.  It can be based on time, the fill fraction, or other steady-state measurements.
+#. **Define how to restart the simulation from existing results (optional)**:
+   The restart options apply when restarting simulations from an existing
+   results file.  The restart options define what information is taken from
+   the restart source file and what information is reset using the initial
+   conditions in the simulation.
+
+
+.. index:: 
+   single: Checklist; Physics
+
+Model setup: Physics
+--------------------------------------------------
+
+#. Activate the relevant physical models based on the annotated diagram
+
+
+.. index:: 
+   single: Checklist; Fluids
+
+Model setup: Fluids
+--------------------------------------------------
+
+#. **Define the properties of fluid 1**: 
+   Define the appropriate physical properties for the active physical models using the annotated diagram as a guide. 
+#. **Define the properties of fluid 2 (if using)**:
+   Define the appropriate physical properties for the active physical models using the annotated diagram as a guide.
+#. **Define any properties of the interface**:
+   Define the properties of the interface between regions of f=1 and f=0.
+   These include the properties for surface tension, phase change, and
+   diffusion.
+
+.. index:: 
+   single: Checklist; Meshing & Geometry
+
+Model setup: Meshing & Geometry
+--------------------------------------------------
+
+#. **Check all STL files for errors**:   
+   Check all STL files for errors using ADmesh, netfabb Studio, or
+   a similar program.  This helps catch any problems with the geometry
+   definition before spending time on the model setup.
+#. **Import and define all subcomponents and components**:
+   Define the 3D solid geometry to match the physical case as described in the
+   annotated diagram.  The end result should be an exact replica of the
+   physical geometry.  Use descriptive names for each part and include the
+   components that will be mass sources.
+#. **Define the properties for all components**:
+   Define all of the material properties, surface properties, motion
+   properties, etc. for each component based on what was drawn in the
+   annotated diagram.  Wait to define mass source properties until the
+   boundary conditions are defined.
+#. **Define any springs and ropes and the associated properties for each**
+#. **Define the mesh to match the simulation domain described in the annotated diagram**:
+   Make sure that the edges of the domain are in the locations identified on
+   the diagram.  Also, remember that three cells are required to identify an
+   interface (a cell with :math:`0<f<1` that is adjacent to a cell with :math:`f=1` and
+   another cell with :math:`f=0`).  Try to use cells that are small enough that at
+   least five cells fit across the thinnest expected contiguous regions of :math:`f=1`
+   and :math:`f=0`.
+#. **Define any baffles that define geometry**
+#. **Define the boundary conditions, mass sources, mass-momentum sources, valves, and vents**:
+   The boundary conditions (including mass sources, mass-momentum sources,
+   valves, and vents) prescribe the solution at a given location for all
+   equations to be solved.  Use the annotated diagram to make sure that what
+   is specified at each boundary (or source, etc.) matches reality for the
+   flow solution, heat transfer solution, electric potential, etc.
+#. **Define the initial conditions for the fluid and any components**:
+   Initial conditions prescribe the solution everywhere in the domain for all
+   equations (the flow solution, heat transfer solution, electric potential,
+   etc.) at time :math:`t=0`.  Use the annotated diagram to make sure that what is
+   specified in the initial conditions is a good approximation of reality at
+   this time. Remember to set initial conditions for the components as well as
+   for the fluid domain.
+#. **Define any measurement devices (sampling volumes, flux surfaces, and history probes)**
+
+
+.. index:: 
+   single: Checklist; Output
+
+Model setup: Output
+--------------------------------------------------
+
+#. **Choose the basis for the output (time, fill fraction, or solidified fraction)**:
+#. **Choose any additional output to add to the restart data**:
+#. **Choose what information to write into the selected data**:
+#. **Define the output rates for the restart, selected, history, short print, and long print data**:
+   The default rates are (10 outputs)/(simulation end time) for restart and long
+   print data and (100 outputs)/(simulation end time) for selected, history, and
+   short print data.
+
+
+.. index:: 
+   single: Checklist; Numerics
+
+Model setup: Numerics
+--------------------------------------------------
+
+#. **Choose any required non-default numerical options**:
+   The numerical options in |prod| are intended for advanced users and give
+   significant control over the numerical approximations and methods used to solve the governing
+   equations.  When used improperly some of these options can cause problems with
+   the solution so, in general, do not adjust these settings without first
+   understanding what the option does and having justification for the
+   adjustment.
+
+
+
+.. index::
+   pair:  Tutorial; Analyze / Display
+   pair:  Tutorial; post-processing in FLOW-3D
+
+.. _pp_in_f3d_tut:
+
+=====================================
+Post-processing in FLOW-3D
+=====================================
+
+This section covers how to use the postprocessor integrated into |prod|; for a
+tutorial on the more powerful, external postprocessor |fst|, see
+the |fst| documentation.  Also, this section uses the results file that is
+generated by running the :menuselection:`Flow Over A Weir` example problem.
+For guidance on how to run this example problem see :ref:`sim_mgr_add_example`
+and :ref:`sim_mgr_run_tut`.
+
+.. only:: html
+
+   The primary reference for using |fst| is the the |fst|
+   :raw-html:`<a href="../FlowSight/ensight101/site_preferences/help/index.html" target="_blank">user manual</a>` 
+   that is accessed from the :menuselection:`Help-->Local Help` menu in |fst|.  
+
+.. only:: latex
+
+   The primary reference for using |fst| is the the |fst| user manual that is
+   accessed from the :menuselection:`Help-->Local Help` menu in |fst|.
+
+
+.. seealso::
+   * See the :ref:`postprocessWithFlow3d` section of the :doc:`postprocessing` chapter for
+     more information on the postprocessor integrated in |prod|.
+   * See the :ref:`flowsight` section of the :doc:`postprocessing` chapter for
+     more information on |fst|.
+
+
+.. index:: 
+   single: plots; existing
+
+Existing Plots
+=====================================
+
+Existing plots are pre-defined plots that are automatically generated by the
+solver.  User-defined plots are described in the :ref:`tut_custom_plots`
+section below.
+
+1. Click on the :menuselection:`Analyze` tab.
+   The :guilabel:`FLOW-3D Results` dialog will be presented; if
+   no message appears (the :guilabel:`Analyze` tab opens), select
+   :menuselection:`Open Results File` to open the same dialog. 
+
+#. Select the :menuselection:`Existing` radio button. Two types of files will
+   be shown in the data file path box, if they exist. Files with the name
+   :file:`prpplt.*` contain plots created automatically by the preprocessor, while files
+   with the name :file:`flsplt.*` contain plots automatically created by the
+   postprocessor as well as plots pre-specified in the input file. 
+
+#. Select :file:`flsplt.Flow_Over_A_Weir` and click :menuselection:`OK`.
+   This will cause the :guilabel:`Display` tab to open automatically.
+
+   .. image:: images/tutorial/flow3d-results-dialog-box-flsplt.*
+      :alt: Existing Results dialog box
+
+#. A list of available plots appears at the right. A particular plot may be
+   viewed by clicking on the name of that plot in the list; plot
+   :menuselection:`26` is shown below.
+
+   .. image:: images/tutorial/viewing-existing-plots.*
+      :alt: Viewing existing plots
+      
+
+
+.. index:: 
+   single: plots; custom
+
+.. _tut_custom_plots:   
+
+Custom Plots
+=====================================
+
+#. Return to the :menuselection:`Analyze` tab. Select
+   :menuselection:`Open Results File` to open the dialog. 
+
+#. Select the :menuselection:`Custom` radio button to see full output files.
+   Full output files include :file:`prpgrf.*` files and :file:`flsgrf.*` files.
+   Since the simulation has been run, the preprocessor output file has been
+   deleted and incorporated into the :file:`flsgrf` file.
+
+#. Select the :file:`flsgrf.Flow_Over_A_Weir` file in the dialog and click
+   :menuselection:`OK`.
+
+   .. image:: images/tutorial/flow3d-results-dialog-box.*
+      :alt: FLOW-3D Results dialog box
+      
+The :guilabel:`Analyze` tab will now be displayed. There are many ways to
+visualize the results of the simulation. The available plot types are:
+
+* **Custom**: Can be used to manually modify output plots using the output codes in the
+  :ref:`customizingPlotsFlsinp` section of this manual. Note that this is an advanced option.
+* **Probe**: Displays graphical and text output for individual cells, boundaries,
+  components, and domain-wide (global) variables vs. time. See :ref:`TimeHistoryPlots` and
+  :ref:`ProbePP` for  more details.
+* **1-D**: Cell data can be viewed along a line of cells in the X, Y, or Z
+  direction. Plot limits can be applied both spatially and in time. See 
+  :ref:`1DGraphics` and :ref:`1Dpp` for more details.
+* **2-D**: Cell data can be viewed in X-Y, Y-Z, or X-Z planes. Plot limits can be
+  applied both spatially and in time. Velocity vectors and particles can be
+  added. See :ref:`2DGraphics` and :ref:`2Dpp` for
+  more details.
+* **3-D**: Surface plots of both fluid and solid can be generated and colored by
+  cell data. Additional information such as velocity vectors, particles (if
+  present), and streamlines can be added. Plot limits can be applied both
+  spatially and in time. See :ref:`3DGraphicsandAnimation` and :ref:`3Dpp` for
+  more details.
+* **Text Output**: cell-by-cell Restart, Selected, and Solidification data can be written to
+  text files. See :ref:`TextOutput` and :ref:`Textpp` for more details.
+* **Neutral File**: Restart and Selected Data can be output at specified
+  points (interpolated or cell-centered), defined in a separate text file.
+  See :ref:`Neutralfilepp` for  more details.
+* **FSI TSE**: Output from the finite-element fluid/solid interaction and
+  thermal-stress evolution physics packages. See :ref:`FSITSEpp` for
+  more details.
+
+.. index:: 
+   single: 3D graphics; output
+
+.. _3DGraphicsandAnimation:
+
+3-D Plots
+-------------------------------------------------------------------
+
+#. Select the :menuselection:`Analyze --> 3-D` tab.
+
+#. Select :menuselection:`Iso-surface = Fraction of fluid`. This is the
+   variable that is used to draw a surface. The surface is drawn through all
+   cells that meet the :guilabel:`Contour Value` criteria for the selected
+   :guilabel:`Iso-surface` variable. :guilabel:`Fraction of fluid` is the
+   default, and will show the fluid surface.
+
+   .. image:: images/tutorial/iso-surface-type.*
+      :alt: Iso-surface type
+
+#. Select :menuselection:`Color variable = pressure`. This selection
+   determines which variable is used to color the iso-surface (in this case, the
+   fluid surface will be drawn colored by pressure).
+
+   .. image:: images/tutorial/color-variable-type.*
+      :alt: Color variable type
+
+#. Select :menuselection:`Component iso-surface overlay = Solid volume`.
+   :menuselection:`Solid Volume` will display the solid components along with the
+   fluid. In a previous step, you did this by selecting :guilabel:`Complement of
+   volume fraction` as the iso-surface, but this option allows simultaneous
+   plotting of both the fluid and solid surface.
+
+   .. image:: images/tutorial/iso-surface-options.*
+      :alt: Iso-surface options
+
+#. Move the :menuselection:`Time frame` sliders to the min and max positions
+   (0 to 1.25 seconds).
+
+   .. image:: images/tutorial/time-frame-selector.*
+      :alt: Time-frame options
+
+#. Click the :menuselection:`Render` button to switch to the
+   :guilabel:`Display` tab and generate a series of 11 plots between t = 0.0
+   and 1.25 seconds which show the weir structure along with fluid surfaces
+   colored by pressure. There are 11 plots because :guilabel:`Restart data` was selected.
+
+#. The available plots are listed in the :guilabel:`Available Time Frames`
+   list. Click :menuselection:`Next` to step between the time frames, or
+   double-click a time frame to display it. The first and last time frames
+   should look like the following:
+
+   .. image:: images/tutorial/render-weir-structure-fluid-surface.*
+      :alt: Render weir structure
+      
+#. Return to the :menuselection:`Analyze --> 3-D tab` and choose the
+   :menuselection:`Selected data` radio button from the :guilabel:`Data Source` group.
+
+   .. image:: images/tutorial/data-source.*
+      :alt: Data source
+
+#. Notice that both sliders in the :guilabel:`Time Frame` selector are at the
+   right now so that only the last time frame will be generated. This is done
+   automatically by the interface when :guilabel:`Selected data` is chosen since
+   there are many time frames available and it could take a long time to render
+   them. Move the left-hand slider to :menuselection:`Time Frame Min = 0` to
+   render all available time frames.
+
+#. Click the :menuselection:`Render` button. Within a few seconds the view will
+   switch to the :guilabel:`Display` window and 101 plots will be listed in the
+   :guilabel:`Available Time Frames` list. Click :menuselection:`Next` repeatedly to
+   step between the time frames.
+
+.. index:: symmetric flow
+
+Show Symmetric Flow
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Since the simulation was set up with a symmetry plane down the center of the
+weir, only half of the weir structure is being simulated and displayed. For
+presentation purposes, you probably want to show both halves of a
+symmetric model. 
+
+#. Go back to the :menuselection:`Analyze --> 3-D` tab and select the
+   :menuselection:`Open Symmetry Boundaries` check box, as shown below.
+
+   .. image:: images/tutorial/open-symmetry-boundaries.*
+      :alt: Open symmetry boundaries
+
+#. Click :menuselection:`Render`. The fluid surface should now appear open at the
+   symmetry boundary on the :guilabel:`Display` tab.
+
+#. Select :menuselection:`Tools --> Symmetry` from the toolbar menu above the
+   display.
+
+#. Select the :menuselection:`Y direction` check box in the dialog to mirror the
+   results across the Y = 0 plane.
+
+   .. image:: images/tutorial/symmetry.*
+      :alt: Symmetry
+
+#. Select :menuselection:`Apply` and :menuselection:`Close`.
+
+#. Double-click the final time frame. The display shows a full weir
+   structure as shown below.
+
+   .. image:: images/tutorial/weir.*
+      :alt: Full weir structure
+      
+.. index:: 3D animation, animation
+
+Create a 3-D Animation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The next step will be to create an animation of the 3-D fluid surface.
+Animations are movies created from the frames in the :guilabel:`Available Time
+Frames` list. To improve the visual effect of animations, it is recommended
+that a common color scale be applied to all frames.
+
+#. Return to the :menuselection:`Analyze --> 3-D` tab.
+
+#. Select both :menuselection:`Global` radio buttons in the :guilabel:`Contour
+   Limits` group box.
+
+   .. image:: images/tutorial/contour-limits.*
+      :alt: Contour limits
+
+#. Click :menuselection:`Render` to re-draw and return to the
+   :guilabel:`Display` tab.
+
+#. Repeat your selection of :menuselection:`Tools --> Symmetry --> Y
+   direction --> Apply` to mirror the results across the Y = 0 plane.
+
+#. Select :menuselection:`Tools --> Animation --> Rubberband Capture` as
+   shown below, and select :menuselection:`OK` after reading the message that appears.
+
+   .. image:: images/tutorial/rubberband-capture.*
+      :alt: Rubberband capture 
+
+#. Click and hold the left mouse button while dragging to select the portion of
+   the screen to animate. A selection box will appear around the region you
+   selected.
+
+   .. image:: images/tutorial/x-y-width-and-height-boxes.*
+      :alt: X, Y, width, and height boxes 
+      
+#. Select the red :menuselection:`Capture` button above the display pane. A dialog will appear to start the
+   animation.
+
+#. The default name for animations is :file:`out.avi`. A more descriptive
+   name is recommended as shown below.
+
+#. The default frame rate is 10 frames per second. This simulation has a
+   finish time of 1.25 seconds, and 100 plots at regular time intervals, so the
+   'real-world' rate is 80 frames/second. This might be too fast,
+   so enter :menuselection:`5` instead and press :menuselection:`OK`.
+
+   .. image:: images/tutorial/avi-capture.*
+      :alt: AVI capture
+
+   Each time frame will be rendered to the :guilabel:`Display` window and bitmap files will
+   be written in the simulation directory. Once this process is complete, the
+   following dialog will appear.
+
+   .. image:: images/tutorial/image-source-files-generated.*
+      :alt: Image source files generated
+
+#. Click the :menuselection:`OK` button to begin the next step of the process.
+   A new process (BMP2VAI.exe) is launched, and a new :guilabel:`Video Compression`
+   window will appear for selecting a compression method. If it's hidden behind another
+   window, bring it to the front.
+
+#. The default compression for animations is uncompressed. This is not
+   recommended for most animations since the file size can be too large to load
+   in a viewer. Select :menuselection:`Microsoft Video 1` if using Windows, or
+   :menuselection:`Cinepak` if using Linux. The selection here depends on what
+   video codecs your computer has available, and what will be available on the
+   machines you use to display the video.
+
+#. Unselect the :menuselection:`Data Rate` checkbox so that the quality of
+   animations is not limited by the data rate.
+
+   .. image:: images/tutorial/video-compression.*
+      :alt: Video compression
+
+#. Click :menuselection:`OK` to begin the compression process. When the
+   compression is complete, the following dialog will appear.
+
+   .. image:: images/tutorial/avi-file-generated.*
+      :alt: AVI file generated
+
+#. Click :menuselection:`OK`. The animation process is now complete.
+
+#. The fastest way to find the .avi file in :guilabel:`Windows Explorer` is to
+   go to the :menuselection:`Simulation Manager` tab and click on the link labeled
+   :menuselection:`Simulation Input File`.
+
+#. Play the animation by double clicking on the :file:`.avi` file. If you don't have the
+   correct codec installed to read the compressed format you selected previously,
+   then consider installing an open-source multi-codec video player.
+
+.. index:: 2D Plots, graphic output
+
+.. _2DGraphics:
+
+2-D Plots
+-------------------------------------------------------------------
+
+#. Select the the :menuselection:`Analyze --> 2-D` tab.
+   The most useful plane to view results for this simulation is the X-Z plane at
+   the weir centerline, which is located at the plane Y = 0.0.
+
+#. Choose the :menuselection:`X-Z plane` radio button.
+
+#. Drag both :menuselection:`Y limit sliders` to :guilabel:`Y = 0.25` (the cell
+   center y-coordinate closest to Y = 0.0). You will also note that the same
+   location is identified as :menuselection:`J = 2`, indicating that the cell in
+   question is the second in the domain. The first cell :menuselection:`(J = 1)`
+   is outside of the mesh, and is used for computing boundary condition properties.
+   The default :menuselection:`contour variable` is pressure and plain velocity
+   vectors are selected by default. The solid geometry is displayed automatically
+   with all 2-D plots, so it does not need to be activated like in 3-D plotting.
+
+#. Click :menuselection:`Vector Options` and enter :menuselection:`X = 2`
+   and :menuselection:`Z = 2`. Vectors will now be plotted every other cell.
+   Select :menuselection:`OK` to accept the vector options.
+
+   .. image:: images/tutorial/vector-options.*
+      :alt: Vector options
+
+#. Click :menuselection:`Render` to generate a time sequence of 2-D plots of pressure
+   in the Y = 0 plane. Graphics similar to following will appear, where T = 0.0
+   seconds (left); T = 0.125 seconds (middle); and T = 1.25 seconds (right).
+
+   .. image:: images/tutorial/2D-results.*
+      :alt: 2D results
+      
+#. Select the :menuselection:`Format` button in the upper right-hand corner of the
+   :guilabel:`Display` screen.
+
+   .. image:: images/tutorial/format-options.*
+      :alt: Format options
+      
+#. Experiment with the various options such as changing line colors, vector
+   lengths and arrowhead sizes. Select :menuselection:`Apply` to see your
+   changes. When you are done, select :menuselection:`Reset` and
+   :menuselection:`OK` to return to the default settings and close the dialog. If
+   there is a set of options you prefer for all plots, you may save them by
+   selecting the :menuselection:`Save` button.
+
+.. index:: 1D Plots, graphic output
+
+.. _1DGraphics:
+
+1-D Plots
+-------------------------------------------------------------------
+
+#. Select the the :menuselection:`Analyze --> 1-D` tab. This tab allows 
+   line-chart plots of cell-by-cell output variables such as 
+   pressure, fluid depth, fluid elevation, and velocity along a row of cells 
+   at one or more plot times.
+
+#. Pick :menuselection:`Selected` as the :guilabel:`Data Source`. The available
+   variables now show only those selected for more frequent plotting.
+
+#. Select :menuselection:`free surface elevation` as the :guilabel:`Data
+   Variable`. :guilabel:`Hydraulic data` is available since it was selected on
+   the :guilabel:`Output` tab.
+
+   .. image:: images/tutorial/selected-data-1D-graphics.*
+      :alt: Selected data for ID graphics
+
+#. Select :menuselection:`X-direction` because the flow direction in this
+   simulation is primarily parallel to the x-axis.
+
+#. Move the :menuselection:`Y-direction` slider to :menuselection:`0.25
+   (J = 2)` so that the cells nearest the flow centerline in
+   the Y-direction are displayed.
+
+#. By default the entire X range will be displayed. You may move the
+   :guilabel:`X-direction` sliders if you wish to limit the extents of the plot.
+   The location of the :guilabel:`Z-direction` slider will not matter since only one
+   :guilabel:`free-surface elevation` is recorded for each column of z-cells in a given x,y
+   location. The :menuselection:`Time frame` sliders should be at :menuselection:`0`
+   and :menuselection:`1.25` seconds.
+
+   .. image:: images/tutorial/flow-direction.*
+      :alt: Flow direction
+      
+#. Click :menuselection:`Render`. A series plots from t = 0.0 to t = 1.25s
+   will be listed in the plot list on the :guilabel:`Display` tab. There are a
+   number of modes in which to view these plots. The default mode is the
+   :guilabel:`Single mode` and is shown in the drop down box below the
+   :guilabel:`Format` button.
+
+   .. image:: images/tutorial/single-mode.*
+      :alt: Default single mode
+
+#. To compare plots of fluid surface elevation at various times, select the
+   :menuselection:`Overlay mode` from the drop down box.
+
+#. Click to select plots :menuselection:`1`, :menuselection:`13`, and
+   :menuselection:`101` in the right-hand pane. The plot names also show the
+   times at which they were recorded: (t = 0.0, 0.15s, and 1.25 s). The output
+   appears as shown below.
+
+   .. image:: images/tutorial/free-surface-elevation.*
+      :alt: Free-surface elevation
+
+#. To save this plot to a bitmap or Postscript file, select the
+   :menuselection:`Output` button.
+
+#. Check the :menuselection:`Plots on Screen` check box to capture the overlay plot
+   (and make only a single output file).
+
+#. Select the :menuselection:`Write` button to create the image file.
+
+#. The resulting image file will be located in the simulation directory
+   (remember how to find this from the :guilabel:`Simulation Manager` tab) and
+   will be named :file:`plots_on_screen.bmp`.
+
+   .. image:: images/tutorial/output-pictures.*
+      :alt: Output pictures
+
+.. index:: custom probe plots, general history data, mesh-dependent data, spatial data, plotting units
+
+.. index::
+   single: plots; custom probe
+
+.. _TimeHistoryPlots:
+
+Probe Plots
+-------------------------------------------------------------------
+
+#. Select the :menuselection:`Analyze --> Probe` tab. 
+   Time history plots are created from this tab as line-graphs or
+   text output of a variable vs. time. There are three types of time-dependent
+   data in |prod|, which are selected from the :guilabel:`Data Source` group.
+
+   * **Spatial data**: :guilabel:`Restart` and :guilabel:`Selected data`
+     sources. Time-dependent values of a single x, y, z cell center
+     coordinate will be plotted. Values can be integrated with respect to time,
+     differentiated with respect to time, or consolidated with a moving average (in
+     time).
+   * **General history data**: Global quantities which vary only with time. Typical
+     quantities are mean kinetic energy, time step, and convective volume error.
+     This data type also includes all data from specified measurement locations
+     (baffles, sampling volumes, history probes) as well as integrated output for
+     moving or stationary solids and springs/ropes, when those options are selected
+     on the :guilabel:`Model Setup --> Meshing and Geometry` tab.
+   * **Mesh-dependent data**: Time-dependent quantities (computed or user-specified)
+     at mesh boundaries. Typical quantities are flow rate at a boundary and
+     specified fluid height at a boundary.
+
+#. Select the :menuselection:`General History` radio button under :guilabel:`Data
+   Source`. Notice that the :guilabel:`X, Y, and Z Data point` sliders turn gray.
+   This is because :guilabel:`General history` data is not associated with any
+   specific cell.
+
+#. Select :menuselection:`mass-averaged fluid mean kinetic energy` from the list.
+
+   .. image:: images/tutorial/graphical-data-output.*
+      :alt: Graphical data output
+      
+#. Select :menuselection:`Units` to open the :guilabel:`Plotting Units` dialog.
+
+#. Select :menuselection:`Show units on plots`.
+
+#. Select :menuselection:`SI`, :menuselection:`CGS`,
+   :menuselection:`slugs/feet/seconds`, or :menuselection:`pounds/inches/seconds`
+   to convert and output the results in the unit system of your choice.
+   Showing and converting units requires that a unit system was selected on
+   the :guilabel:`Model Setup --> General` tab. You checked this in an earlier
+   step; the geometry and fluid properties were specified in the
+   centimeters/grams/seconds system.
+
+   .. image:: images/tutorial/plotting-units.*
+      :alt: Plotting units
+
+#. Select :menuselection:`OK` to close the :guilabel:`Plotting Units` dialog.
+
+#. Select :menuselection:`Render` to generate a graphical output of the data.
+   The output shows mass-averaged mean kinetic energy for all of the fluid in
+   the domain over time. The plot will appear as shown, with unit labels based
+   on your selection in the previous step. The plot indicates that the total
+   kinetic energy is oscillating around some mean value. As the oscillations
+   become smaller, the simulation approaches steady-state flow.
+
+   .. image:: images/tutorial/probe-MKE-output.*
+      :alt: Probe MKE output
+
+#. Return to the :menuselection:`Analyze --> Probe` tab.
+
+#. Output the graph as text data by selecting :menuselection:`Text` in the
+   :guilabel:`Output Form` group and then re-select :menuselection:`Render`.
+
+   .. image:: images/tutorial/output-form.*
+      :alt: Output form
+
+#. The output can be saved to a text file by selecting the :menuselection:`Save As`
+   button in the text dialog that appears.
+
+#. Select :menuselection:`Continue` to close the output window.
+
+.. index:: text output
+
+.. _TextOutput:
+
+Text Output
+-------------------------------------------------------------------
+
+#. Select the :menuselection:`Analyze --> Text Output` tab.
+
+   :guilabel:`Text output` works the same way as the :guilabel:`Probe` tab, except
+   that only cell-by-cell data (:guilabel:`Restart` or :guilabel:`Selected`) can be output
+   (no component, measurement-station, or global data), and more than one cell
+   can be selected to output data for each plot time. Cells are selected in 3-D
+   blocks using the sliders. The default spatial extents are set to the entire 
+   domain.
+
+#. Experiment with outputting text data on your own.
+
+
+

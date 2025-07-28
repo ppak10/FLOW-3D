@@ -1,0 +1,3 @@
+.. include:: ../shared/installation/computer-setup.rst
+.. include:: ../shared/installation/licensing.rst
+.. include:: ../shared/installation/installation.rst

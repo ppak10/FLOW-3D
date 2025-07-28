@@ -1,0 +1,4172 @@
+.. *******************************************************************************
+.. OVERVIEW AND EQUATIONS OF MOTION
+.. *******************************************************************************
+
+.. ###############################################
+.. import shared documentation 
+.. include:: ../shared/theory/overview.rst
+
+.. include:: ../shared/theory/equations/coordinate-systems.rst
+.. include:: ../shared/theory/equations/mass-continuity.rst
+.. include:: ../shared/theory/equations/momentum-equations.rst
+.. include:: ../shared/theory/equations/free-surfaces.rst
+.. include:: ../shared/theory/equations/fluid-energy.rst
+.. include:: ../shared/theory/equations/structure-temperature.rst
+.. include:: ../shared/theory/equations/equation-of-state.rst
+.. include:: ../shared/theory/equations/scalar-transport.rst
+.. ###############################################
+
+
+.. *******************************************************************************
+.. AUXILIARY MODELS
+.. *******************************************************************************
+
+.. ###############################################
+.. import shared documentation 
+.. include:: ../shared/theory/models/bubbles.rst
+.. ###############################################
+
+.. index:: vaporization residue, one-fluid problem, evaporation, condensation
+
+.. _VaporizationResidueTheoryTh:
+
+Vaporization Residue
+======================
+
+Fluids at free surfaces in a one-fluid problem can either evaporate or condense
+when a phase change model is used. This holds true for both cases where the gas
+side of the interface is a constant pressure or when it is a homogeneous bubble
+region. If the fluid contains one or more solutes, the concentration of the
+solutes must change in response to the gain or loss of liquid. Typically, the
+solutes become more concentrated due to liquid evaporation.
+
+In either the evaporation or condensation case, any scalar concentration that is
+associated with the fluid will have its concentration altered by the phase
+change. If a surface element is less than half filled with liquid, then the
+concentration change is spread into the principal neighbor of the surface
+element to the extent that the concentration region equals half the thickness of
+the surface element.
+
+If enough evaporation occurs and the solute concentration becomes high enough,
+it may result in a surface skin or a residue may form on a solid surface if the
+liquid is completely evaporated. For this to be simulated in |prod|, the residue
+model must be selected. Activation of this model causes the solute to form a
+non-moving residue once its concentration reaches a user-defined maximum packing
+density. If more than one solute is present the residue model will record the
+total of all solute contributions to the residue.
+
+.. ###############################################
+.. import shared documentation
+.. include:: ../shared/theory/models/buoyancy.rst
+.. include:: ../shared/theory/models/core-gas.rst
+.. include:: ../shared/theory/models/permeable-mold.rst
+.. include:: ../shared/theory/models/defect-tracking.rst
+.. include:: ../shared/theory/models/drift-flux.rst
+.. ###############################################
+
+.. index:: electro-mechanics
+
+.. _electromechanicsTh:
+
+Electro-mechanics
+=======================
+
+.. index:: electric field model
+
+.. index::
+   single: models; electric field
+
+.. _ElectricFieldModelTh:
+
+Electric Field Model
+--------------------------------
+
+To simulate physical processes such as movement of charged mass particles,
+particle and liquid dielectrophoresis, and electro-osmosis, an electric field
+distribution is needed. In |prod|, the electric potential is solved for using the
+following equation.
+
+.. math::
+   :label: electricPotential
+
+   \nabla  \cdot \left( {K\nabla \phi } \right) =  - \frac{\rho _e}{\varepsilon _0}
+
+with the electric field calculated by
+
+.. math::
+   :label: electricFieldEquation
+
+   {\mathbf{E}} =  - \nabla \phi
+
+where :math:`\rho _e`, :math:`\varepsilon _0` are free charge density (i.e.,
+electric charge per unit volume) and permittivity of vacuum or void (defined by
+:envvar:`elperm` in |prod|) respectively while :math:`K` is the spatially-varying
+dielectric constant.
+
+Numerical solution of the Poisson equation Eq. :eq:`electricPotential` is done by 
+an iterative solver using the GMRES method.
+
+At open boundaries (i.e., boundaries through which fluid flow can occur),
+either an insulation condition (i.e., :math:`{\mathbf{n}} \cdot \nabla \phi
+= 0` where :math:`\textbf n` is a normal vector on the boundary in question)
+or a specified value of the electric field can be specified. Solid objects can
+be assigned time-dependent potentials if they are conductors. Alternatively,
+an object can be a dielectric material with an assigned dielectric constant.
+In this case, the electric potential is computed within the object. Also,
+solid dielectrics may have non-zero conductivities that support free charges
+and currents.
+
+Optionally, a charge density equation that includes charge convection, charge
+relaxation and charge sources associated with non-uniform electric properties is
+solved simultaneously with the electric potential. Please refer to
+:ref:`electricFieldsMR` in the Model Reference chapter and the :ref:`Technical
+Notes <electricFieldTechNotes>` listed at the end of this section for more
+information.
+
+Most people use the SI system of units for electrostatic and electromagnetic
+problems. In the SI system the standard unit of charge is the coulomb and the
+unit of potential is the volt. Electric field intensities are measured in
+Newton/coulomb in the SI system. When using the CGS system of units, it is
+customary to express charge and potential in the "electrostatic" units of
+statvolt and statcoulomb, where:
+
+   1 coulomb (C) = 2.998 :math:`\times` 10\ :sup:`9` statcoulomb (statC)
+
+   1 volt (V) = 3.336 :math:`\times` 10\ :sup:`-3` statvolt (statV)
+
+Electric forces are then,
+
+   1 Newton = 1 C :math:`\cdot` V :math:`\cdot` m\ :sup:`-1` = 10\ :sup:`5` dyne
+
+   1 dyne = 1 statC :math:`\cdot` statV :math:`\cdot` cm\ :sup:`-1` = 10\ :sup:`-5` Newton
+
+If the fluid or solid regions are conducting then charges may develop in
+response to the applied field and to changes in conductivity and dielectric
+properties. If a thermal model is activated then Joule heating due to these
+currents is computed in all conducting fluids and solids. The heat source
+per unit open cell volume and time associated with passing electric current through
+conducting fluid, :math:`Q_{Joule}`, is
+
+.. math::
+   :label: JouleHeatingSourceFluid
+
+   Q_{Joule} = F \cdot VF \cdot \kappa|\mathbf{E}|^{2}
+
+where :math:`F` and :math:`VF` are the fluid and open volume fractions in cell and
+:math:`\kappa` is  the fluid electrical conductivity. For two-fluid problems, :math:`F`
+is replaced with 1.0 and :math:`\kappa` with the volume-averaged mixture value of the 
+electrical conductivity. Similarly, the Joule heat source in solid is
+
+.. math::
+   :label: JouleHeatingSourceSolid
+
+   Q_{Joule solid} = (1 - VF) \cdot \kappa_{solid}|\mathbf{E}|^{2}
+
+
+.. _electricFieldTechNotes:
+
+More details are given in Flow Science Technical Notes #52, #56, #69 and #70 on the users site at |tn|.
+
+.. index:: electro-osmosis
+
+.. _ElectroOsmosisTheoryTh:
+
+Electro-osmosis
+------------------------
+
+Generally, most substances such as silica and glass will acquire a surface
+electric charge when brought into contact with an aqueous (polar) medium
+(electrolyte solution), as shown in the figure below.
+
+   .. image:: images/theory/surface-electric-charge.*
+      :alt: Surface electric charge when brought into contact with an aqueous (polar) medium (electrolyte solution)
+      :width: 3.125 in   
+
+A layer called the electric double layer (EDL) is formed close to the charged
+surface in which there is an excess of counter-ions over co-ions to neutralize
+the surface charge. There are more counter-ions than co-ions in the region
+near the fluid/solid interface. The electric potential created due to the EDL
+is called the :math:`\xi -`\ potential and is assumed to be imposed at the
+solid surface. The :math:`\xi -`\ potential is a property of the solid-liquid
+pair and can be measured experimentally. The thickness of the EDL is indicated
+by the following parameter, called the Debye shielding distance or Debye
+length.
+
+.. math::
+   :label: debyeShieldingDistance
+
+   {\lambda _D} = {\left( {\frac{{\varepsilon RT}}{{2{F^2}{z^2}{c_0}}}} \right)^{\frac{1}{2}}}
+
+where:
+
+* |varepsilon| = liquid permittivity
+* :math:`R` = gas constant
+* :math:`T` = temperature
+* :math:`F` = Faraday's constant
+* :math:`c_0` = ion concentration
+* :math:`z` = valence
+
+More details on EDL and related physics can be found in :cite:`Probstein-1994`.
+
+Electro-osmotic flow or electro-osmosis refers to the fluid motion that occurs
+when an electric field is applied to an electrolyte solution in the vicinity of
+a charged surface. The process can be described by the following equations
+
+.. math::
+   :label: electroOsmosis1
+
+   {\mathbf{F}} = {\rho _E}{\mathbf{E}}
+
+|
+
+.. math::
+   :label: electoOsmosis2
+
+   {\rho _E} =  - 2F{c_0}\sinh (\frac{{F\psi }}{{RT}})
+
+|
+
+.. math::
+   :label: electroOsmosis3
+
+   {\nabla ^2}\psi  = \frac{{\rho E}}{\varepsilon }
+
+where |psi| is the :math:`\xi -`\ potential. An insulation-like boundary
+condition is imposed for the :math:`\xi -`\ potential on all mesh boundaries
+with a symmetry condition. On solid (obstacle) surfaces, the :math:`\xi -`\
+potential is imposed. Here Boltzmann charge density distribution for liquid with
+single valence is assumed. But the user can easily provide other different
+charge density distributions in two simple functions named :program:`psi` and
+:program:`dfdpfi` released to users. How to do this customization is described in
+these two functions.
+
+Please refer to :ref:`Electro-osmosis <electroOsmosisMR>` in Model Reference to
+get related information on how to use the model.
+
+
+.. index:: particle movement, electric field, fluid flow
+
+.. _ParticleMovementTh:
+
+Particle Movement and Fluid Flow Due to Electric Field
+-----------------------------------------------------------
+
+An electric charge or charge dipoles can be carried by molecules, small
+droplets, and particles which are called charge, or charge dipole carriers, or
+mass particles in |prod|. If the charge of a mass particle, :math:`i`, is
+:math:`e_i`, the electric force (called coulomb force) acting on this particle
+is
+
+.. math::
+   :label: coulombForce
+
+   {{\mathbf{f}}_i} = {e_i}{\mathbf{E}}
+
+where :math:`{\mathbf{E}}` is the electric field intensity and its calculation is
+described above. If a mass particle, :math:`i`, carries charge dipoles and the
+corresponding dipole moment is :math:`p_i`, the electric force (called
+polarization force) imposed on this mass particle is
+
+.. math::
+   :label: polarizationForce
+
+   {{\mathbf{f}}_i} = ({{\mathbf{p}}_i} \cdot \nabla ){\mathbf{E}}
+
+If all energy losses in the carriers are neglected, the dipole moment is
+calculated by
+
+.. math::
+   :label: dipoleMoment
+
+   {{\mathbf{p}}_i} = 4\pi {\varepsilon _0}r_p^3K_f\left( {\frac{{{K_p} - K_f}}{{{K_p} + 2K_f}}} \right){\mathbf{E}}
+
+where :math:`K_p` is the particle dielectric constant, :math:`K_f` is the
+fluid dielectric constant, :math:`r_p` is the particle radius and :math:`e_0`
+is the permittivity of vacuum. Then, the electric force imposed on mass
+particle, :math:`i`, carrying the charge dipoles can be cast into
+
+.. math::
+   :label: electricForceImposedOnMassParticleI
+
+   {{\mathbf{f}}_i} = 2\pi {\varepsilon _0}r_p^3K_f\left( {\frac{{{K_p} - K_f}}{{{K_p} + 2K_f}}} \right)\nabla {E^2}
+
+Instead of paying attention to the carriers mentioned above, we consider fluid
+where these charges or charge dipole carriers are distributed. According to
+Newton's law, the fluid will experience some body forces due to existence of
+charge or charge dipoles. The body force due to free charge is
+
+.. math::
+   :label: bodyForceDueToFreeCharge
+
+   {\mathbf{F}} =  - {\rho _e}{\mathbf{E}}
+
+where :math:`\rho _e` is the free charge density. The body force due to charge
+dipoles is
+
+.. math::
+   :label: bodyForceDueToChargeDipoles
+
+   {\mathbf{F}} = ({\mathbf{P}} \cdot \nabla ){\mathbf{E}}
+
+where :math:`{\mathbf{P}}` is the density of the dipole moment. For dilute
+dipoles in fluid, this density can be calculated by
+
+.. math::
+   :label: diluteDipolesInFluid
+
+   {\mathbf{P}} = {\varepsilon _0}(K_f - 1){\mathbf{E}}
+
+The body force is then calculated by
+
+.. math::
+   :label: bodyForce
+
+   {\mathbf{F}} = \frac{1}{2}{\varepsilon _0}(K_f - 1)\nabla {E^2}
+
+In |prod|, users can provide a charge density distribution. This distributed
+charge density is defined using the |prod| scalar variable having index
+:envvar:`IECHRG` (a |prod| input parameter).
+
+Movement of particles carrying induced charge dipoles due to polarization is
+called particle Dielectrophoresis (DEP) while fluid flow due to existence of
+charge dipoles from polarization is called liquid Dielectrophoresis.
+
+With the aforementioned equations included in |prod|, users can simulate both
+particle and liquid Dielectrophoresis. Please refer to
+:ref:`dielectrophoresisRefMR` to get related information on how to use the
+models.
+
+
+.. ###############################################
+.. import shared documentation
+.. include:: ../shared/theory/models/granular.rst
+.. ###############################################
+
+.. index:: elastic and thermoelastic stress model
+
+.. index::
+   single: models; elastic and thermoelastic stress
+
+.. _viscoelasticStressModelTh:
+
+Elasto-visco-plastic and Viscoelastic Model
+======================================================
+
+For some materials, there is an additional stress in the total state of stress
+aside from pressure and viscosity: the elastic stress. Whilst viscous stress
+is a function of the **strain rate** of the material, the elastic stress is a
+function of the local total **strain** of the material. Such materials include
+Bingham fluids, where the elastic stress grows until a yielding limit, and
+then the material behaves like a viscous liquid, and viscoelastic materials,
+where the amount of viscous and elastic stresses varying constantly within the
+material depending on the local rate of strain. Examples of a Bingham fluid
+are solid-filled suspensions, like toothpaste, where the solid particles
+"lock" together under low strain, and when this binding breaks, will flow as a
+liquid. Polymer melts and solutions are examples of viscoelastic fluids, where
+the long molecules of the polymer become entangled and resist deformation when
+rapidly sheared, yet can easily slide past one another when shearing is slow.
+
+Since the viscous stress is solely based on the instantaneous strain rate at
+every point in the domain at a particular point in time, and thus need not be
+stored in |prod| during the course of the simulation, the elastic stress must
+be stored since the history over time of a material point needs to be known to
+compute the current state of elastic stress. Furthermore, because most
+materials are isotropic in nature, the Cauchy stress is symmetric, so there
+are 6 unique components of the elastic stress tensor. By default, these are
+stored as advecting quantities, so the elastic stress is advected along with
+the flow of the material through the domain. For simulations where minimal
+flow is expected, the advection of elastic stress can be turned off.
+
+Only the deviatoric part of the elastic stress is stored; the isotropic part
+is merely the pressure, and is solved via the enforcement of the continuity
+equation as with any viscous liquid in |prod|. The deviatoric part is the elastic 
+stress associated with shearing and stretching of the material. The isotropic
+part of stress is solved much like pressure for (nearly) incompressible
+materials; it is solved implicitly for all cases to avoid the small time steps
+associated with the high bulk modulus of most materials. The deviatoric part
+of stress is solved separately, either implicitly or explicitly, by activation
+of the :guilabel:`Elastic stress` solver.
+
+.. index:: model formulation
+
+.. _ModelFormulationTh:
+
+Model Formulation
+---------------------
+
+The incremental elastic stress model incorporated into |prod| computes the
+elastic stress using linear Hookean theory. Although this simple constitutive
+equation predicts linear responses to stress, implementation as an
+*incremental* model allows the prediction of highly nonlinear responses
+because the response within each small time step can be well approximated as
+linear, since the incremental strain during each time step is small.
+
+The relationship between elastic stress, viscous stress and yielding depends
+on the model chosen. 
+
+For the :guilabel:`Elasto-viscoplastic model`, the figure below shows
+pictorially how the total stress is a summation of the viscous stress and the
+elastic stress, along with the slip due to the yield stress limit. Thus the
+model predicts that the total state of stress is a summation of the viscous
+stress and the elastic stress, represented by the dashpot and spring,
+respectively. Suppose a rod of this material, as described by this model,
+undergoes a fixed amount of strain, imposed over a very short time. This model
+would predict a corresponding rise in elastic stress that is linearly
+proportional to the strain. Also, during the short time of the strain
+imposition, the viscous stress would become significant, only to fall to zero
+the instant the imposed strain ceases. If further strain were to be imposed to
+a point such that the elastic stress surpasses the yield stress, the material
+would yield and begin to flow as a liquid.
+
+.. _pictorialViewOfViscoplasticModel:
+
+.. figure:: images/theory/Pictorial-view-of-viscoplastic-model.*
+   :width: 3.125 in
+   :alt: Pictorial view of Elasto-viscoplastic model, showing the relationship between the elastic and viscous stresses.
+
+   Pictorial view of Elasto-viscoplastic model, showing the relationship between the elastic and viscous stresses.
+
+If a viscoelastic model (either the :guilabel:`Oldroyd-B model` or the
+:guilabel:`Giesekus` model) is selected, the pictorial relationship between
+viscous and elastic stresses are shown in the figure below. Note that the
+spring and dashpot are in series in this model, meaning that the total state
+of forces at any point in the material is the same for both the viscous and
+elastic stress. However, the strain and strain-rate can be very different. A
+rod of this material that is quickly stretched would have a large viscous
+stress because the strain rate is large due to the rapid movement. The elastic
+stress would be equally large, and so the material would have a solid-like
+behavior. If the same total strain were to be applied over a very long period
+of time, the resulting strain-rate would be very small, and thus the viscous
+forces would also be very small. Likewise, the elastic forces must be very
+small, even if the total strain is very large. In this scenario, the material
+would appear very much like a viscous liquid.
+
+.. _pictorialViewOfViscoelastModel:
+
+.. figure:: images/theory/Pictorial-view-of-viscoelastic-model.*
+   :width: 3.125 in
+   :alt: Pictorial view of viscoelastic model, showing the relationship between the elastic and viscous stresses.
+
+   Pictorial view of viscoelastic model, showing the relationship between the
+   elastic and viscous stresses.
+
+
+Models to relate the strain and strain rate to the total state of stress are
+constitutive equations, and in |prod| there are 3 choices (along with the
+standard assumption of no elastic forces at all).
+
+The total state of stress, which is needed for the solution of the Navier-Stokes system of equations, is:
+
+.. math::
+   :label: totalstateOfStress
+
+   {\boldsymbol \sigma } = -p {\mathbf{I}}+ {{\boldsymbol \tau }_V} + {{\boldsymbol \tau }_E}
+
+where :math:`p` is the local pressure, :math:`{{\boldsymbol \tau }_V}` is the
+deviatoric part of the viscous stress and :math:`{{\boldsymbol \tau }_E}` is the
+deviatoric part of the elastic stress. :math:`p` and :math:`{{\boldsymbol \tau }_V}` 
+are already taken care of with existing models; the goal of this model
+is to compute :math:`{{\boldsymbol \tau }_E}`.
+
+Elasto-viscoplastic model
+-------------------------
+
+For the :guilabel:`Elasto-viscoplastic` model, we use the Hookean assumption
+of small deformations between each time step and thus the incremental stress
+(the change from one computational cycle to the next) is related to the
+incremental strain as:
+
+.. math::
+   :label: stateOfStressElasticModel
+
+   {{\boldsymbol \tau }_E} = \left( {K - \tfrac{2}{3}G} \right)e{\mathbf{I}} + 2G{\mathbf{E}} - 3\alpha K\left( {\Delta T } \right){\mathbf{I}}
+
+where:
+
+* :math:`{{\boldsymbol \tau }_E}` is the elastic stress tensor,
+* :math:`{\mathbf{E}}` is the strain tensor,
+* :math:`{\mathbf{I}}` is the unit isotropic tensor,
+* :math:`G` is the shear modulus,
+* :math:`K` is the bulk modulus,
+* |alpha| is the linear thermal expansion coefficient,
+* :math:`{\Delta T }` is the local temperature increment, and
+* :math:`e` is the volume strain; this characterizes the isotropic expansion or contraction of the material and is equal to the trace of strain
+
+.. math::
+   :label: traceOfStrain
+
+   {\mathrm{tr}} \left( {\mathbf{E}} \right) .
+
+Although Eq. :eq:`stateOfStressElasticModel` is a linear model, if computed
+incrementally over small enough time periods such that each incremental
+deformation is small enough to obey the linear assumptions, non-linear
+processes can be predicted. Eq. :eq:`stateOfStressElasticModel` can be written
+for both the *deviatoric* and isotropic parts of :math:`{{\boldsymbol \tau }_E}`
+(by definition, :math:`{{\boldsymbol \tau }_E}` is symmetric). The deviatoric
+part is
+
+.. math::
+   :label: deviatoricStress
+
+   {{\boldsymbol \tau '}_E} = 2 G {\mathbf{E '}}
+
+where :math:`{{\boldsymbol \tau '}_E}` is the deviatoric part of the elastic
+stress, :math:`G` is the shear modulus, and :math:`{\mathbf{E '}}` is
+the deviatoric part of incremental strain:
+
+.. math::
+   :label: strainTensor3D
+
+   {\mathbf{E'}} = \Delta t \left\{ {\raise0.5ex\hbox{$\scriptstyle 1$}
+   \kern-0.1em/\kern-0.15em
+   \lower0.25ex\hbox{$\scriptstyle 2$}} \left[ {\nabla {\mathbf{u}} + {{\left( {\nabla {\mathbf{u}}} \right)}^T}} \right] - {\raise0.5ex\hbox{$\scriptstyle 1$}
+   \kern-0.1em/\kern-0.15em
+   \lower0.25ex\hbox{$\scriptstyle 3$}} \left( \nabla \cdot {\mathbf{u}} \right) {\mathbf{I}} \right\}
+
+where :math:`{\mathbf{u}}` is the local material velocity (as computed in
+|prod|\ ), and :math:`\Delta t` is the time step.
+
+The isotropic part of Eq. :eq:`stateOfStressElasticModel` is
+
+.. math::
+   :label: isotropicTraceOfStrain
+
+   p =  - Ke + 3\alpha K\left( {\Delta T} \right)
+
+where :math:`p` is negative of the mean isotropic stress, or "pressure," and is
+equal to :math:`- {\mathrm{tr}}\left( {\tau _{\text{E}}} \right)/{\text{3}}`.
+
+We can write :eq:`deviatoricStress` as a differential equation:
+
+.. math::
+   :label: diffEquation
+
+   \underbrace{\frac{\partial {\boldsymbol \tau '}_E}{\partial t}}_{\substack{\textrm{Change in stress} \\ \textrm{at fixed point in space}}}
+   + \underbrace{\nabla \cdot \left( {\mathbf u} {\boldsymbol \tau '}_E \right)}_{\substack{\textrm{Change in stress}\\ \textrm{due to movement}\\ \textrm{of material}}} 
+   = \underbrace{2G {\mathbf{D'}} \left( {x, t} \right) }_{ \substack{\textrm{Change in stress}\\ \textrm{due to stretching}\\ \textrm{or shearing}}}
+   + \underbrace{{\boldsymbol \tau '}_E \cdot {\mathbf{W}} + {\mathbf{W}}^{ \mathbf{T}} \cdot {\boldsymbol \tau '}_E}_{ \substack{\textrm{change in stress due to}\\ \textrm{solid-body rotation}}}
+
+where :math:`{\mathbf{D'}}` is the deviatoric part of the strain *rate*
+tensor. In three dimensions, it is
+
+.. math::
+   :label: strainRateTensor3D
+
+   {\mathbf{ D'}} = {\raise0.5ex\hbox{$\scriptstyle 1$}
+   \kern-0.1em/\kern-0.15em
+   \lower0.25ex\hbox{$\scriptstyle 2$}}\left[ {\nabla {\mathbf{u}} + {{\left( {\nabla {\mathbf{u}}} \right)}^T}} \right] - {\raise0.5ex\hbox{$\scriptstyle 1$}
+   \kern-0.1em/\kern-0.15em
+   \lower0.25ex\hbox{$\scriptstyle 3$}} \left( \nabla \cdot {\mathbf{u}} \right){\mathbf{I}} 
+
+and :math:`{\mathbf{W}}` is the *vorticity* tensor:
+
+.. math::
+   :label: vorticityTensor
+
+   {\mathbf W} = \frac{1}{2} \left[ {\nabla {\mathbf{u}} - {{\left( {\nabla {\mathbf{u}}} \right)}^T}} \right] .
+
+
+We note that the elasto-viscoplastic and viscoelastic model in |prod| applies only to incompressible fluids. 
+Therefore, :math:`\left( \nabla \cdot {\mathbf{u}} \right)` in Eqs. :eq:`strainTensor3D` and :eq:`strainRateTensor3D` vanishes. 
+Equation :eq:`diffEquation` is solved by using scalar arrays to store the
+components of the elastic stress tensor; these components are already advected
+with the motion of the material, and the incremental strain is added to the
+stress tensor components at each time step. Similarly, Eq.
+:eq:`isotropicTraceOfStrain` can be rewritten as
+
+.. math::
+   :label: incrementalStrainAddedToStressTensor
+
+   \frac{{\partial p}}{{\partial t}} + \nabla  \cdot \left( {{\mathbf{u}}p} \right) =  - K\dot e + 3\alpha K\left[ {\frac{{\partial T}}{{\partial t}} + \nabla  \cdot \left( {{\mathbf{u}}T} \right)} \right]
+
+The advection term in Eq. :eq:`incrementalStrainAddedToStressTensor` (second
+term on left side) is assumed to be small, relative to the time derivative of
+:math:`p` because pressure waves, especially within solids, move far faster than
+the material advects (in all subsonic simulations). Therefore, this term is
+assumed to be zero.
+
+The current value of stress is a function of the past history of a material
+element. Material that enters the domain has a null state of stress, unless
+specified otherwise at the domain boundaries. Also, the initial condition at the
+beginning of the simulation has a null state of stress, unless specified
+otherwise by the initial conditions.
+
+In order to predict yielding effects, the Mises yield condition is used. This
+condition is
+
+.. math::
+   :label: misesYieldCondition
+
+   I{I_{{\boldsymbol \tau '}_{\mathbf E}}} = \frac{Y^2}{3}
+
+where :math:`I{I_{{\boldsymbol \tau '}_{\mathbf E}}}` is the second invariant
+of the deviatoric part of the elastic stress tensor and :math:`Y` is the yield
+stress limit, a  user-defined parameter. In regions of the material where the
+elastic stress (measured by :math:`I{I_{{\boldsymbol \tau '}_{\mathbf E}}}`)
+exceeds the yield criterion, the elastic stress is relaxed such that the
+condition in Eq. :eq:`misesYieldCondition` is met:
+
+.. math::
+   :label: yieldLimitedElasticTensor
+
+   {\boldsymbol \tau '^{^*}}_{\mathbf E} = \sqrt{\frac{2Y^2}{3I{I_{{\boldsymbol \tau '}_{\mathbf E}}} } {\boldsymbol \tau '}_{\mathbf E} }
+
+where :math:`{\boldsymbol \tau '^{^*}}_{\mathbf E}` is the yield-limited
+elastic stress tensor; it is this tensor that is applied to the Navier-Stokes
+equations for the momentum balance of the fluid.
+
+Viscoelastic models
+-------------------
+
+For viscoelastic materials, there is a continual balance between viscous and
+elastic forces within the fluid, and so a different constitutive model is
+needed. Instead of Eq. :eq:`stateOfStressElasticModel` along with the
+yielding condition of Eq. :eq:`misesYieldCondition`, the constitutive
+equation to define :math:`{\boldsymbol \tau '}_{\mathbf E}` for the
+**Oldroyd-B model** is:
+
+.. math::
+   :label: viscoelasticConstitutive
+
+   \lambda \overset{\nabla}{{\boldsymbol \tau '}_{\mathbf E}} 
+   + {\boldsymbol \tau '}_{\mathbf E}
+   = 2 \eta {\mathbf D'}
+
+where :math:`\lambda` is the *relaxation time* and :math:`\eta` is the
+*elastic viscosity*. :math:`\overset{\nabla}{{\boldsymbol \tau '}_{\mathbf E}}` is
+the *upper-convected derivative* of :math:`{\boldsymbol \tau '}_{\mathbf E}`, written as
+
+.. math::
+   :label: upperconvectedderivative
+
+   \overset{\nabla}{{\boldsymbol \tau '}_{\mathbf E}}
+   = \frac{\partial {\boldsymbol \tau '}_{\mathbf E}}{\partial t} 
+   + {\mathbf u} \cdot \nabla {\boldsymbol \tau '}_{\mathbf E}
+   - \left (\nabla{\mathbf u}  \right )^T \cdot {\boldsymbol \tau '}_{\mathbf E}
+   - {\boldsymbol \tau '}_{\mathbf E} \cdot \nabla{\mathbf u}
+
+Alternatively, :math:`\eta` can be defined as :math:`G \lambda`, where
+:math:`G` is the shear modulus of the solid-like behavior of the material.
+Therefore,
+
+.. math::
+   :label: viscoelasticConstitutive2
+
+   \overset{\nabla}{{\boldsymbol \tau '}_{\mathbf E}} 
+   = 2 G {\mathbf D'} 
+   - \frac{1}{\lambda} {\boldsymbol \tau '}_{\mathbf E}
+
+Large values of the relaxation time, :math:`\lambda`, mean that the last term in Eq. :eq:`viscoelasticConstitutive2` is
+small, and the elastic stress relaxes slowly. For small :math:`\lambda`, the
+term is large, and the elastic stress relaxes very quickly.
+
+Similarly, for the **Giesekus** model, there is an additional nonlinear term added to Eq. :eq:`viscoelasticConstitutive`:
+
+.. math::
+   :label: viscoelasticConstitutiveGiesekus
+
+   \lambda \overset{\nabla}{{\boldsymbol \tau '}_{\mathbf E}} 
+   + {\boldsymbol \tau '}_{\mathbf E}
+   + \alpha \frac{\lambda}{\eta} {\boldsymbol \tau '}_{\mathbf E} \cdot {\boldsymbol \tau '}_{\mathbf E}
+   = 2 \eta {\mathbf D'}
+
+where :math:`\alpha` is the the *dimensionless mobility factor*. This factor
+provides an additional fitting parameter for the viscoelastic behavior of the
+material. The other parameters have the same meaning as for the *Oldroyd-B* model.
+
+Rearranging Eq. :eq:`viscoelasticConstitutiveGiesekus`, we get:
+
+.. math::
+   :label: viscoelasticConstitutiveGiesekus2
+
+   \overset{\nabla}{{\boldsymbol \tau '}_{\mathbf E}} 
+   = 2 G {\mathbf D'}
+   - \frac{1}{\lambda} {\boldsymbol \tau '}_{\mathbf E}
+   - \frac{\alpha}{\lambda G} {\boldsymbol \tau '}_{\mathbf E} \cdot {\boldsymbol \tau '}_{\mathbf E}
+
+With both the *Oldroyd-B* and *Giesekus* models, the constitutive equations
+:eq:`viscoelasticConstitutive2` and :eq:`viscoelasticConstitutiveGiesekus2`
+are solved using |prod|\ 's scalar advection model, and the additions terms in
+:eq:`diffEquation`, :eq:`viscoelasticConstitutive2`, or
+:eq:`viscoelasticConstitutiveGiesekus2` (depending on model chosen) are solved
+implicitly or explicitly. The next section describes this in more detail.
+
+.. index:: solution method, numerical stability, free surfaces
+
+.. _SolutionMethodTh:
+
+Solution Method
+-------------------
+
+The solution of the strain rate tensor, :math:`\mathbf{\dot E}`, is similar to
+that used in the viscous stress algorithm. The normal components of
+:math:`\mathbf{\dot E}` are computed at the cell center, while the shear components
+are calculated at the cell edges. The figure below shows a typical computational
+cell and the stress component calculation locations. The shear components are
+computed on the cell edges for computational convenience and numerical
+stability.
+
+.. _computationalCellStrainRateTensor:
+
+.. figure:: images/theory/computational-cell-strain-rate-tensor.*
+   :align: center
+   :width: 2.6 in
+   :alt: Computational cell showing locations of components of strain rate tensor
+
+   Computational cell showing locations of components of strain rate tensor
+
+At free-surfaces, the external fluid is presumed to be a gas vapor which exerts
+negligible stress on the fluid surface. Therefore, :math:`{\bf{n}} \cdot
+{{\boldsymbol\tau}_E'} = 0` at such interfaces. In |prod|, the principal
+directions in which free-surfaces and the status of neighboring cells are known.
+From this information, the appropriate components of
+:math:`{{\boldsymbol\tau}_E'}` are set to zero at free-surface to ensure that
+the aforementioned condition is met. At interfaces with solid walls or
+obstacles, the fluid velocity in the cell neighboring the wall (or obstacle) and
+the velocity of the wall (or obstacle) are used to compute the strain rate using
+Eq. :eq:`strainRateTensor3D`.
+
+If the explicit method is chosen, the elastic stress is updated with Eq.
+:eq:`diffEquation`, :eq:`viscoelasticConstitutive2` or
+:eq:`viscoelasticConstitutiveGiesekus2` using information from the previous
+time step, and the resulting value of :math:`{\boldsymbol \tau '}_{\mathbf E}`
+is used in Eq. :eq:`momentumConservation` (as additional terms to the *viscous
+accelerations*) to compute the new velocity for the current time step.
+
+This method has the advantage of simplicity and rapid computation during each
+time step. However, for materials whose elastic effects dominate other effects,
+the numerical stability limit can be very small. Therefore, the *implicit method*
+can be selected to eliminate this time-step limit for such problems. The
+disadvantages of this method are that the computational effort required during
+each time step is much greater and it can dampen out oscillations that may
+physically occur.
+
+If the implicit algorithm is chosen, a prediction of the velocity is computed
+in the same way as the explicit method. However, the velocity is updated based
+on the remainder of the momentum equation (the differences between the
+explicit approximation, and the approximation using the most up-to-date
+velocity), along with the equation of isotropic stress Eq.
+:eq:`incrementalStrainAddedToStressTensor`:
+
+.. math::
+   :label: implicitPredictionOfVelocity
+
+   \delta {\mathbf{u}} = \frac{{\Delta t}}{\rho }\left[ { - \nabla \left( {\delta P} \right) + \nabla  \cdot \left( {\delta {\boldsymbol \tau '}_{\mathbf E} } \right)} \right]
+
+where the value of :math:`{\boldsymbol \tau '}_{\mathbf E}` is the most up-to-date value.
+
+The method used to solve Eq. :eq:`implicitPredictionOfVelocity` is the Jacobi
+method; in this method, all of the updated elastic stress tensor components
+throughout the domain are solved based on the velocity computed from the
+previous iteration; components from neighboring recently computed cells are not
+included until the next iteration. This is repeated until the change in velocity
+from one iteration to the next is smaller than a preset tolerance. If desired,
+this method can be used in conjunction with the Jacobi implicit viscous stress
+method for materials whose viscous effects are also very large. Currently, the
+implicit elastic stress model cannot be used with the :abbr:`ADI (Alternating
+Direction Implicit)` or :abbr:`GMRES (Generalized Minimum Residual Solver)`
+implicit viscous stress algorithms.
+
+The pressure, :math:`P`, is computed separately, using Eq.
+:eq:`incrementalStrainAddedToStressTensor`, and the solution algorithm is
+exactly the same as that for liquid pressure. The pressure and velocity
+components are updated for each iteration until the residual of Eq.
+:eq:`incrementalStrainAddedToStressTensor` falls below a preset tolerance. The
+numerical method can be :abbr:`SOR (Successive Over Relaxation)`, :abbr:`ADI
+(Alternating Direction Implicit)`, or :abbr:`GMRES (Generalized Minimum
+Residual Solver)`. The :abbr:`SOR (Successive Over Relaxation)` algorithm is
+very similar to the aforementioned Jacobi method, except that the most 
+up-to-date values, including neighbor values computed in the current iteration, are
+used. The :abbr:`ADI (Alternating Direction Implicit)` algorithm solves
+simultaneously an entire row of cells in the direction chosen, while the
+:abbr:`GMRES (Generalized Minimum Residual Solver)` algorithm solves the fully
+coupled system of equations.
+
+.. index:: shear modulus, G
+
+.. _ElasticModulusTh:
+
+Computation of parameters
+-------------------------------------
+
+The shear modulus :math:`G`, the yield stress limit :math:`Y`, relaxation
+time :math:`\lambda` and the mobility factor :math:`\alpha` can be defined on
+both fluid 1 and fluid 2. Additionally, tabular temperature-dependent data can
+be provided.
+
+When two viscoelastic fluids occupy a computational cell, the parameter used
+in that cell is a weighted linear interpolation of the properties of the two
+fluids. For tabular temperature-dependent data, a piecewise linear
+interpolation is assumed between data points, as with any other
+temperature-dependent quantities in |prod|.
+
+.. index:: elastic membrane and elastic wall model
+
+.. index::
+   single: models; elastic membrane and elastic wall
+
+.. _ElasticMembraneAndElasticWallModelTh:
+
+Elastic Membrane and Elastic Wall Model
+==========================================
+
+A limited Fluid-Structure Interaction (FSI) capability is available in |prod|
+with the elastic membrane and wall model. In this model, deformation of an
+elastic membrane or an elastic wall impacts the adjacent fluid flow, while fluid
+pressure, in turn, affects the deformation. These interactions are described in
+the code in a fully coupled fashion.
+
+The main limitation of the model is that the deformation is assumed to be small,
+i.e., for each membrane and elastic wall, its deflection is much smaller than
+its size. This allows useful simplifications for the model. The geometries of
+membranes and elastic walls are thus assumed to be time-invariant throughout
+calculation, while effects of their deformation on fluid flow are described with
+volume source or sink distributed on the fluid-structure interface. With the
+further assumption that the pressure force is uniformly distributed on the
+membrane surface, analytical solutions rather than structural analysis
+algorithms are used to determine membrane deformation for a better computational
+efficiency.
+
+.. index:: elastic membrane
+
+.. _ElasticMembraneTheoryTh:
+
+Elastic Membrane
+-------------------
+
+An elastic membrane in |prod| is a rectangular or circular thin plate which
+undergoes a small elastic deformation under action of external forces. Its
+thickness and material properties are assumed to be uniform. Its edge can be
+either simply supported or clamped. By simply supported edge we mean an edge
+with both zero deflection and zero net force moment. At a clamped edge, however,
+both deflection and its first order derivatives are zero, but the force moment
+is generally non-zero. In any case, the model requires that a membrane has the
+same condition all along its edges. There is no restriction on location of a
+membrane in the mesh grid, but the membrane's surface must be perpendicular to
+x, y, or z axis.
+
+The model considers two external forces acting on the membrane: the hydraulic
+pressure force and an actuator force. The hydraulic pressure force is obtained
+by integration of pressure over both sides of the membrane. It is then converted
+into a uniformly distributed force over the whole membrane.
+
+An actuator force is present in many applications such as micro-pump flow and
+inkjet droplet formation. One example is about a piezoelectric actuator attached
+on a membrane. When an electric voltage is applied, the piezoelectric actuator
+exerts a force on the membrane in the surface normal direction, which is the so
+called actuator force. Users can prescribe the actuator force either as a
+sinusoidal or piecewise linear function of time. In the model, the actuator is
+always assumed to be centered on one side of the membrane, and the shape (but
+not necessarily the size) of the contact area of the actuator with the membrane
+is the same as that of the membrane. In other words, both membrane and the
+actuator must be either rectangular or circular and have the same symmetric
+axis. Because the actuator itself usually has much lower rigidity than the
+membrane, it is further assumed the actuator force always acts uniformly over
+the contact area. If a zero contact area is given, then the actuator force is
+treated as a concentrated force at the membrane's center.
+
+To achieve a better computational efficiency, analytical solutions rather than
+structural analysis algorithms are used for the deflection calculation. At any
+point in time the membrane is assumed to be in an equilibrium state, defined by
+balance of the hydraulic force, actuator force and the membrane's rigidity.
+Analytical solutions are obtained by solving the equilibrium equation for a thin
+plate with small deformation,
+
+.. math::
+   :label: deflectionCalculation
+
+   {\nabla ^2}{\nabla ^2}w = \frac{f}{D}
+
+where:
+
+* :math:`w` is deflection,
+* :math:`f` is the net external force per unit area on the membrane,
+* :math:`D` is flexural rigidity,
+
+.. math::
+   :label: flexuralRigidity
+
+   D = \frac{E{h^3}}{12\,(1 - {\nu ^2})}
+
+where:
+
+* :math:`E` is Young's modulus,
+* |nu| is Poisson's ratio, and
+* :math:`h` is the membrane's thickness.
+
+Consider a rectangular membrane with its surface perpendicular to the z axis. In
+a Cartesian coordinate system Eq. :eq:`deflectionCalculation` is then written as
+
+.. math:: 
+   :label: rectangularMembraneSurfacePerfendicularToZaxis
+
+   \frac{{{\partial ^4}w}}{{\partial {x^4}}} + 2\frac{{{\partial ^4}w}}{{\partial {x^2}\partial {y^2}}} + \frac{{{\partial ^4}w}}{{\partial {y^4}}} = \frac{f}{D}
+
+For convenience, we place the coordinates' origin at the membrane center. Let
+:math:`a` and :math:`b` represent the membrane's lengths in x and y directions,
+respectively. The boundary conditions for the membrane with the simply supported
+edges are
+
+.. math::
+   :label: boundaryConditionsMembraneSimplySupportedEdges
+ 
+     \begin{gathered}
+     w = 0 \quad \text{    and    } \quad \frac{{\partial ^2}w}{\partial {x^2}} = 0 \quad \text{    for    } \quad x =  \pm \frac{a}{2} \\
+     \\
+     w = 0 \quad \text{    and    } \quad  \frac{{\partial ^2}w}{\partial {y^2}} = 0 \quad \text{    for    } \quad y =  \pm \frac{b}{2} \\
+     \end{gathered}
+
+If the membrane has clamped edges, the boundary conditions are
+
+.. math::
+   :label: boundaryConditionsMembraneClampedEdges
+
+     \begin{gathered}
+     w = 0 \quad \text{    and    } \quad \frac{\partial w}{\partial x} = 0 \quad \text{    for    } \quad x =  \pm \frac{a}{2} \\
+     \\
+     w = 0 \quad \text{    and    } \quad  \frac{\partial w}{\partial y} = 0 \quad \text{    for    } \quad y =  \pm \frac{b}{2} \\
+     \end{gathered}
+
+For a circular membrane, it is convenient to write Eq.
+:eq:`deflectionCalculation` in a cylindrical coordinate system with its origin
+located at the membrane's center,
+
+.. math::
+   :label: boundaryConditionsCircularMembrane
+
+   \frac{1}{r}\frac{d}{{dr}}\left\{ {r\frac{d}{{dr}}\left[ {\frac{1}{r}\frac{d}{{dr}}\left( {r\frac{{dw}}{{dr}}} \right)} \right]} \right\} = \frac{f}{D}
+
+With :math:`a` denoting the membrane's radius, the boundary condition for the simply
+supported edge is
+
+.. math::
+   :label: membranesRadiusSimplySupportedEdge
+
+   w = 0 \quad \text{    and    } \quad \frac{{{\partial ^2}w}}{{\partial {r^2}}} = 0 \quad \text{    for    } \quad r = a
+
+For the clamped edge, the boundary condition is
+
+.. math::
+   :label: membranesRadiusClampedEdge
+
+   w = 0 \quad \text{    and    } \quad \frac{\partial w}{\partial r} = 0 \quad \text{    for    } \quad r = a
+
+All the analytical solutions for the membrane's deflection used in the model
+satisfy the above equations. Some of these solutions are found in Timoshenko
+(1959), while the others are derived from Timoshenko's solutions using the
+supposition method. Please refer to Flow Science Technical Note #79 on the
+users site at |tn| for the details of these solutions.
+
+To account for effects of the membrane motion on fluid flow, the continuity
+equation is modified with a volume source (or sink) term :math:`S` added to its
+right hand side,
+
+.. math::
+   :label: continuityEquationModifiedVolumeSource
+
+   \frac{{{V_f}}}{\rho }\frac{{\partial \rho }}{{\partial \,t}} + \frac{1}{\rho }\nabla  \cdot (\rho \,\vec uA) = S
+
+In a computation control volume, or mesh cell,
+
+.. math::
+   :label: continuityEquationComputationControlVolumeOrMeshCell
+
+   S = \frac{S_{\rm{mb}}}{V_{\rm{cell}}}\, {\vec V_{\rm{mb}}} \cdot \vec n
+
+where :math:`V_{\rm{cell}}` is the cell volume, :math:`S_{\rm{mb}}`,
+:math:`\vec n` and :math:`{\vec V_{\rm{mb}}}` are respectively surface area,
+unit outer normal vector and velocity of the membrane surface in the mesh
+cell. :math:`{\vec V_{\rm{mb}}}` is obtained from the rate of deflection
+change. The transport equation for the VOF function is also modified with a
+source term :math:`FS`,
+
+.. math::
+   :label: sourceTermFS
+
+   {V_f}\frac{\partial F}{\partial \,t} + \nabla  \cdot (F\vec u{A_f}) = FS
+
+Other transport equations for momentum, energy, turbulence and scalars remain
+unchanged because in |prod| these equations are used in their non-conservative
+forms. When they are derived from their conservation forms with consideration of
+the continuity equation, the source terms due to membrane motion are canceled
+out.
+
+.. index:: elastic wall
+
+.. _ElasticWallTheoryTh:
+
+Elastic Wall
+----------------
+
+An elastic wall in |prod| is an elastic object of arbitrary shape, and its
+surface deformation is small and proportional to hydraulic pressure, namely
+
+.. math::
+   :label: elasticWallSurfaceDeformation
+
+      w =  - \frac{{(p - {p_{\rm{ref}})}}}{K}
+
+where:
+
+* :math:`w` is local deflection in surface normal direction,
+* :math:`p` is local pressure,
+* :math:`p_{\rm{\rm{ref}}}` is a reference pressure,
+* :math:`K` is coefficient of rigidity per unit area.
+
+Such kind of elastic deformation occurs if the Poisson's ratio for the wall
+material is zero, which means the normal stress causes no lateral strain. It is
+a good approximation for elastic wall deformation if the Poisson's ratio is not
+zero but small. With the lateral strain term neglected, the Hooke's law is
+reduced to
+
+.. math::
+   :label: hookesLawLateralStrainTermNeglected
+
+   \varepsilon  = \frac{\sigma }{E}
+
+where:
+
+* |varepsilon| is the strain,
+* |sigma| is the normal stress, and
+* :math:`E` is Young's modulus.
+
+:math:`K` in Eq. :eq:`elasticWallSurfaceDeformation` is a user-prescribed
+parameter. To determine the value of :math:`K`, consider a plate at
+equilibrium with one side fixed and the other side under a normal force.
+Assume the Poisson's ratio is negligible and the normal stress is |sigma| at a
+location on its surface. From force balance, the normal stress inside the
+plate has the same value |sigma| along the vertical line through that
+location. Denote the plate's thickness as :math:`h` and the deflection as
+:math:`w`. The strain is then :math:`w/h`, and the Hooke's law in Eq.
+:eq:`hookesLawLateralStrainTermNeglected` gives
+
+.. math::
+   :label: hookesLawStrain
+
+   w = \frac{\sigma }{E/h}
+
+It indicates that in this case :math:`K = \frac{E}{h}`. In general,
+:math:`K` can be estimated as
+
+.. math::
+   :label: elasticWallUserPrescribedParameterK
+
+   K = \frac{E}{L}
+
+where :math:`L` is a length scale comparable to the depth of the elastic wall.
+It may also be obtained from other means such as experimental measurement or
+full structural analysis.
+
+Effects of the elastic wall motion on fluid flow are described by adding a
+volume source (or sink) at the wall surface. The continuity and the transport
+equations for VOF are modified in the same way as described in the section for
+elastic membranes.
+
+.. _ModelLimitationsTh:
+
+Model Limitations
+-------------------
+
+The model allows for multiple elastic membrane and elastic wall objects with
+different shape, size, orientation and physical quantities. It is compatible
+with most other models of |prod|. For example, heat transfer across membranes and
+elastic walls can be included. However, restrictions and limitations exist.
+
+The model requires that both elastic membranes and elastic walls have *small*
+deflections. A small deflection for a membrane means the deflection is less than
+the membrane's size. For an elastic wall, its deformation needs to be small
+compared to the computational cell size. This assumption allows us to ignore the
+actual change in the position of the deforming surfaces. In other words, the
+shape of the membranes and deforming walls are fixed throughout the
+calculations, as defined by their initial setup. As shown above, effects of
+surface deformation on fluid motion are modeled through the fluid source
+distribution on the deforming surface. When computational results are displayed,
+deformation can be visualized by plotting the contours of *deflection*. It is
+also noted that an elastic membrane/wall cannot be porous or a moving object at
+the same time. If a moving object collides with a membrane or elastic wall, the
+latter is treated as a non-moving rigid object in collision simulation, thus the
+impact will only affect motion of the moving object.
+
+.. index:: fan and impeller model
+
+.. index::
+   single: models; fan and impeller
+
+.. _FanAndImpellerModelTh:
+
+Fan and Impeller Model
+========================
+
+The fan and impeller model used in |prod| can be used when the rotation rate of
+the blades is such that many revolutions are required before a steady flow is
+established in the fluid.
+
+This model induces both swirl and axial velocity components. The definition of a
+fan or impeller is done in terms of a "phantom" obstacle that defines a region
+but does not have any real obstacle blockage effects. Generally, these obstacles
+are assumed to be right-circular cylinders of outer radius :math:`R`, inner
+radius :math:`r` and thickness :math:`L`, which defines the region swept out by
+the rotating blades.
+
+Aside from the geometry, the remaining parameters that determine the performance
+of a fan or impeller are its rotation rate :math:`S_d`, an accommodation
+coefficient :math:`A_d` that controls how effective the blades are in setting
+fluid into motion, and a coefficient :math:`B_d` that controls the amount of
+axial flow induced.
+
+It is best to determine the values of :math:`A_d` and :math:`B_d` from empirical
+data because the performance of a fan or impeller depends on details of the
+blade sizes and shapes and on the number of blades. The manufacturers of these
+devices often characterize them by so called "performance curves," which are
+plots of pressure drop across the device versus the average flow rate passing
+through it. The figure below shows a typical (made up) example of a performance
+curve.
+
+.. _typicalExampleOfPerformanceCurve:
+
+.. figure:: images/theory/typical-example-of-performance-curve.*
+   :width: 4.1 in
+   :alt: Typical performance curve (solid line) and |prod| approximation (dashed)
+
+   Typical performance curve (solid line) and |prod| approximation (dashed)
+
+A performance curve for the model used in |prod| can be derived by relating the
+rotating momentum source to an equivalent pressure drop across the thickness of
+the device and averaging the flow rate over the entire cross section. The result
+is:
+
+.. math::
+   :label: performanceCurveEquation
+
+   \Delta p = \rho L{A_d}\left( {\frac{2}{3}{S_d}{B_d}R\left( {1 - \frac{{{r^3}}}{{{R^3}}}} \right) - \frac{Q}{{\pi {R^2}}}} \right)
+
+In this expression |rho| is the fluid density and :math:`Q` is the net flow
+rate. This relationship gives a linear performance curve with y-intercept
+:math:`\Delta \rho _0` and x-intercept :math:`Q_0` in the above figure given
+by:
+
+.. math::
+   :label: linearPerformanceCurve
+
+   \Delta {p_0} = \rho L\left( {\frac{{{Q_0}}}{{\pi {R^2}}}} \right){A_d}, \quad {Q_0} = \frac{2}{3}\pi \left( {{R^3} - {r^3}} \right){S_d}{B_d}
+
+Using these relations and a given rotation rate :envvar:`OSPIN` :math:`= S_d`, the
+:envvar:`OADRG` :math:`= A_d`, and :envvar:`OBDRG` :math:`= B_d` parameters can be computed to give
+a linear approximation to any desired performance curve.
+
+.. ###############################################
+.. import shared documentation
+.. include:: ../shared/theory/models/fsi-tse.rst
+.. include:: ../shared/theory/models/gmo.rst
+.. ###############################################
+
+.. ###############################################
+.. begin coupled-motion and mooring line addendum
+
+.. index:: rigid-body collision, dynamic equations
+
+.. _DynamicEquationsForRigidBodyCollisionTh:
+
+Dynamic Equations for Rigid-Body Collision
+----------------------------------------------
+
+.. Coulomb's law of friction
+
+.. _CoulombsLawTh:
+
+Coulomb's Law of Friction
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Assume body B collides on body B' and their contact point (or collision point)
+is respectively denoted as C on body B and C' on body B'. A collision reference
+system (collision system) is set up with its origin located at the contact point
+with :math:`n_1`, :math:`n_2`, :math:`n_3` denoting the unit vectors of its
+three coordinate axes. :math:`n_3` is along the normal direction of the common
+tangential plane of the two bodies at the contact point and directs from body B'
+to body B. Let :math:`\vec v` represent the relative velocity of point C to C', and
+:math:`\vec p` the impulse of contact force on body B. In vector form, they are
+
+.. math::
+   :label: coulombsLawOfFriction
+
+   \vec v = ({v_1},{v_2},{v_3}) {\text ,} \; \vec p = ({p_1},{p_2},{p_3})
+
+where the lower index represents the corresponding component in :math:`n_1`,
+:math:`n_2`, or :math:`n_3`. We now simply denote :math:`n` for normal direction
+:math:`n_3` and :math:`p` for normal impulse :math:`p_3`, Coulomb's law of
+friction is then written
+
+.. math::
+   :label: coulombsLawOfFrictionNormalDirectionNormalImpulse1
+
+   {\sqrt {{{(d{p_1})}^2} + {{(d{p_2})}^2}}  < \mu \,dp} {\text ,} \quad {\mathbf {if}} \quad {{v_1}^2 + {v_2}^2 = 0}
+
+|
+
+.. math::
+   :label: coulombsLawOfFrictionNormalDirectionNormalImpulse2
+
+   {d{p_i} =  - \frac{{\mu \,{v_i}}}{{\sqrt {{v_1}^2 + {v_2}^2} }}dp} {\text ,} \quad {\mathbf {i=1,2,}} \quad {\mathbf {if}} \quad {{v_1}^2 + {v_2}^2 = 0}
+
+Equation :eq:`coulombsLawOfFrictionNormalDirectionNormalImpulse2` can also be
+written
+
+.. math::
+   :label: coulombsLawOfFrictionNormalDirectionNormalImpulse3
+
+   d{p_1} =  - \mu \cos \varphi \,\,dp {\text ,} \; d{p_2} =  - \mu \sin \varphi \,dp {\text ,} \quad {\mathbf {if}} \quad {v_1}^2 + {v_2}^2 > 0
+
+where |varphi| is the angle of sliding direction measured from :math:`n_1` about
+:math:`n`.
+
+.. index:: Stronge's energetic coefficient of restitution
+
+.. _StrongesCoefficientTh:
+
+Stronge's Energetic Coefficient of Restitution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As generally understood, a collision process is divided into compression and
+restitution phases. Stronge's hypothesis is to relate the work done by normal
+impulse during restitution to that during compression. Stronge's energetic
+coefficient of restitution :math:`e` is defined as
+
+.. math::
+   :label: strongesEnergeticCoefficientOfRestitutionE
+
+   e =  \sqrt{- \frac{{{W_3}({p_f}) - {W_3}({p_c})}}{{{W_3}({p_c})}}}
+
+where:
+
+* :math:`W_3` is work done by normal impulse,
+* :math:`p_c` is the normal impulse when collision reaches maximum compression, and
+* :math:`p_f` is the total impulse of collision.
+
+In Eq. :eq:`strongesEnergeticCoefficientOfRestitutionE`, the numerator under the square root is the
+total work by normal impulse during restitution and always non-negative, and the
+denominator is the work done during compression and is always negative. The value of
+:math:`e` is between 0 and 1. :math:`W_3` is calculated by
+
+.. math::
+   :label: strongesEnergeticCoefficientOfRestitutionW3
+
+   {W_3}(p) = \int_{\,0}^{\,p} {{v_3}dp}
+
+.. index::
+   single: dynamic equations; general form
+
+.. _DynamicEquationGeneralTh:
+
+Dynamic Equations in General Form
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Assume the two bodies B and B' have mass M and M', and their mass centers are
+located at G and G', respectively. In the collision system, the relative
+velocity at the contact point satisfies the equations of motion,
+   
+.. math::
+   :label: collisionSystemEquationsOfMotion
+
+   d{v_i} = m_{ij}^{ - 1}d{p_j} \quad {\mathbf {(i=1,2,3)}}
+
+where Einstein's convention of summation is used, and
+
+.. math::
+   :label: einsteinsConventionOfSummation
+
+   m_{ij}^{ - 1} = {m_{B,}}_{ij}^{ - 1} + {m_{B\,',}}_{ij}^{ - 1}
+
+in which :math:`{m_{B,}}_{ij}^{ - 1}` and :math:`{m_{B\,',}}_{ij}^{ - 1}` are
+terms for bodies B and B', respectively. If both bodies have 6 DOF, the
+expressions of :math:`{m_{B,}}_{ij}^{ - 1}` and :math:`{m_{B\,',}}_{ij}^{ - 1}`
+are
+
+.. math::
+   :label: einsteinsConventionOfSummationIfbothBodies6DOF1
+
+   {m_{{B,}_{ij}}}^{ - 1} = \frac{1}{M}{\delta _{ij}} + {\varepsilon _{ikm}}{\varepsilon _{jl\,n}}J_{kl}^{ - 1}{r_m}{r_n} \quad {\mathbf {(6~DOF)}}
+
+.. math::
+   :label: einsteinsConventionOfSummationIfBothBodies6DOF2
+
+   {m_{B\,',}}_{ij}^{ - 1} = \frac{1}{{M'}}{\delta _{ij}} + {\varepsilon _{ikm}}{\varepsilon _{jl\,n}}{J'}_{kl}^{ - 1}{r'_m}{r'_n} \quad {\mathbf {(6~DOF)}}
+
+where:
+
+* :math:`\delta _{ij}` is Kronecker delta,
+* :math:`\varepsilon _{ijk}` is permutation tensor,
+* :math:`J_{kl}^{ - 1}` and :math:`{J'}_{kl}^{ - 1}` are elements of inverses of inertia tensor about mass center for the two bodies in the collision system, respectively, 
+* :math:`r_i` and :math:`{r'_i}` are components of distance vectors from the mass center to the collision point for the two bodies, respectively, 
+
+Expressions for :math:`m_{ij}^{ - 1}` for fixed-axis and fixed-point motions
+can be found in Flow Science Technical Note #76 on the users site at
+|tn|.
+
+.. index::
+   single: dynamic equations; normal impulse
+
+.. _DynamicEquationNormalImpulseTh:
+
+Dynamic Equations in Terms of Normal Impulse
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If two bodies in collision slide initially at their contact point, friction may
+bring slip to a halt when collision is eccentric and initial speed of sliding is
+small enough. After that, they either stick at the contact point (called slip-stick) 
+or renew sliding immediately (called slip reversal) in a new direction
+until they are separated, depending on inertia property of the two objects and
+the friction coefficient. The sliding before halt occurs is called the first
+phase of sliding, and that in slip reversal is called the second phase of
+sliding. If friction does not cause halt of slip or the collision is
+frictionless, only the first phase of sliding can exist throughout collision.
+
+When two objects slide during collision, the tangential velocity components are
+
+.. math::
+   :label: tangentialVelocityComponents
+
+   {v_1} = s\cos \varphi \quad {\text ,} \quad {v_2} = s\sin \varphi
+
+where :math:`s` is sliding speed,
+
+.. math::
+   :label: slidingSpeed
+
+   s = \sqrt {{v_1}^2 + {v_2}^2}
+
+and |varphi| is sliding direction which varies during collision. Introducing
+Coulomb's Law of friction in Eq.
+:eq:`coulombsLawOfFrictionNormalDirectionNormalImpulse3` into Eq.
+:eq:`collisionSystemEquationsOfMotion`, equations of motion in terms of the
+normal impulse :math:`p` for the first phase of sliding are
+
+.. math::
+   :label: equationsOfMotionTermsOfNormalImpulse1
+
+   \frac{{d{v_1}}}{{dp}} = {\text{ - }}\mu \,m_{11}^{ - 1}\cos \varphi  - \mu \,m_{12}^{ - 1}\sin \varphi  + m_{13}^{ - 1} 
+
+.. math::
+   :label: equationsOfMotionTermsOfNormalImpulse2
+
+   \frac{{d{v_2}}}{{dp}} = {\text{ - }}\mu \,m_{21}^{ - 1}\cos \varphi  - \mu \,m_{22}^{ - 1}\sin \varphi  + m_{23}^{ - 1} 
+
+.. math::
+   :label: equationsOfMotionTermsOfNormalImpulse3
+
+   \frac{{d{v_2}}}{{dp}} = {\text{ - }}\mu \,m_{21}^{ - 1}\cos \varphi  - \mu \,m_{22}^{ - 1}\sin \varphi  + m_{23}^{ - 1} 
+
+If the objects are perfectly smooth (\ :math:`\mu = 0`), then Eqs.
+:eq:`equationsOfMotionTermsOfNormalImpulse1` to
+:eq:`equationsOfMotionTermsOfNormalImpulse3` are independent, otherwise they
+are coupled. Equations governing :math:`s` and |varphi| are
+
+.. math::
+   :label: equationGovereningsandvarphi1
+
+   \frac{{ds}}{{dp}} = m_{13}^{ - 1}\cos \varphi  + m_{23}^{ - 1}\sin \varphi  - \mu \,m_{11}^{ - 1}{\cos ^2}\varphi  - 2\mu \,m_{12}^{ - 1}\sin \varphi \cos \varphi  - \mu \,m_{22}^{ - 1}{\sin ^2}\varphi  \equiv g(\mu ,\varphi )
+
+|
+
+.. math::
+   :label: equationGovereningsandvarphi2
+
+   s\frac{{d\varphi }}{{dp}} =  - m_{13}^{ - 1}\sin \varphi  + m_{23}^{ - 1}\cos \varphi  + \mu \,(m_{11}^{ - 1} - m_{22}^{ - 1})\sin \varphi \cos \varphi  + \mu \,m_{12}^{ - 1}({\sin ^2}\varphi  - {\cos ^2}\varphi ) \equiv h(\mu ,\varphi )
+
+For slip-stick, :math:`{v_1} = {v_2} = 0` and :math:`\frac{d{v_1}}{dp} = \frac{d{v_2}}{dp} = 0`. 
+The zero tangential velocity is accompanied by a tangential
+frictional force along a constant direction :math:`\bar \varphi  - \pi`. It is
+shown :cite:`Stronge-2000`,
+
+.. math::
+   :label: tangentialFrictionalForceAlongConstantDirection
+
+   \bar \varphi  = {\tan ^{ - 1}}\left( {\frac{{m_{11}^{ - 1}m_{23}^{ - 1} - m_{12}^{ - 1}m_{13}^{ - 1}}}{{m_{22}^{ - 1}m_{13}^{ - 1} - m_{23}^{ - 1}m_{12}^{ - 1}}}} \right)
+
+Components of differential impulse of the tangential force in :math:`n_1` and
+:math:`n_2` satisfy
+
+.. math::
+   :label: componentsOfDifferentialImpulseTangentialForce
+
+   \begin{gathered}
+   d{p_1} =  - \bar \mu \cos \bar \varphi \,\,dp \quad {\text ,} \quad d{p_2} =  - \bar \mu \sin \bar \varphi \,\,dp \\
+   \sqrt {{{(d{p_1})}^2} + {{(d{p_2})}^2}}  = \bar \mu \,dp \\
+   \end{gathered}
+
+where :math:`\bar \mu` is coefficient for stick,
+
+.. math::
+   :label: barMuCoefficientForStick
+
+   \bar \mu  = \frac{{\sqrt {{{(m_{11}^{ - 1}m_{23}^{ - 1} - m_{12}^{ - 1}m_{13}^{ - 1})}^2} + {{(m_{22}^{ - 1}m_{13}^{ - 1} - m_{23}^{ - 1}m_{12}^{ - 1})}^2}} }}{{m_{11}^{ - 1}m_{22}^{ - 1} - m_{12}^{ - 1}m_{12}^{ - 1}}}
+
+and :math:`\bar \mu  < \mu`. Equations of motion are thus
+
+.. math::
+   :label: equationsOfMotion
+
+   \begin{gathered}
+   {v_1} = 0 \\
+   {v_2} = 0 \\
+   \frac{{d{v_3}}}{{dp}} = {\text{ - }}\bar \mu \,m_{31}^{ - 1}\cos \bar \varphi  - \bar \mu \,m_{32}^{ - 1}\sin \bar \varphi  + m_{33}^{ - 1}\\
+   \end{gathered}
+
+During the second phase of sliding, or slip reversal, equations of motion,
+Eqs. :eq:`equationsOfMotionTermsOfNormalImpulse1` to
+:eq:`equationsOfMotionTermsOfNormalImpulse3`, are still valid. However,
+different from the first phase of sliding in which sliding direction varies
+during collision, sliding in the second phase is along a constant direction
+|varphi|. It is obtained by solving :math:`h\,(\mu ,\varphi ) = 0` in Eq.
+:eq:`equationGovereningsandvarphi2` for |varphi|. There can be multiple
+solutions of |varphi|. The sliding direction is the unique solution satisfying
+:math:`{\frac{ds}{dp}} = g(\mu ,\varphi ) > 0` defined in Eq.
+:eq:`equationGovereningsandvarphi1`.
+
+If friction causes slip halt, then comparison of the friction coefficient |mu|
+and coefficient for stick :math:`\bar \mu` determines if slip stick or slip
+reversal occurs after that. If :math:`\bar \mu  < \mu`, slip-stick is achieved.
+Otherwise, slip reversal happens immediately.
+
+For further details of the dynamic equations and the numerical method for
+collision simulation, please refer to Flow Science Technical Notes #75 and #76
+on the users site at |tn|.
+
+
+
+.. index:: mooring line model
+
+.. index::
+   single: models; mooring line
+
+.. _mooringlinesth:
+
+Mooring Line Model
+---------------------------------
+
+The mooring line model allows moving objects with prescribed or coupled motion to be 
+connected to fixed anchors or other moving or non-moving objects via compliant mooring lines.
+Multiple mooring lines can exist in one simulation, and their connections to moving objects 
+are arbitrary. The mooring lines can are be taut or slack and may be partially rest on sea/river 
+floor. The mooring line end point(s) can be tethered on moving objects with coupled or
+prescribed motion, fixed in space, or completely free. The model considers gravity, buoyancy, fluid 
+drag and tension force on the mooring lines. It numerically calculates the full 3D dynamics of the
+lines and their dynamic interactions with the tethered moving objects. 
+
+The model assumes that the mooring lines are cylinders with uniform diameter and material 
+distribution. Each line, however, can have its own length, diameter, mass density and physical 
+properties. The model uses a finite segment approach to calculate mooring motion. As shown in 
+figure below, a mooring line is divided uniformly into a certain number of discrete segments which 
+are represented by mass particles located at the segment centers. The dynamic equation of 
+motion for each segment is
+
+.. math::
+   :label: mooringLineMotionEquation
+
+   {m_p}\frac{d{\mathbf{v}}_p}{dt} = \mathbf{G} + \mathbf{B} + \mathbf{T}_1 + \mathbf{T}_2 + \mathbf{D}_n + \mathbf{D}_t 
+
+where:
+
+* :math:`{m_p}` is mass of the segment, 
+* :math:`{\mathbf{v}_p}` is is the mass center velocity of the segment,
+* :math:`{\mathbf{G}}` is the gravitational force,
+* :math:`{\mathbf{B}}` is the buoyant force,
+* :math:`{\mathbf{T}_1}` and :math:`{\mathbf{T}_2}` are the tension forces at the two ends of the segment, 
+* :math:`{\mathbf{D}_n}` and :math:`{\mathbf{D}_t}`  are the fluid drag forces in normal and tangential directions of the segment, respectively. They are evaluated using the quadratic drag law: 
+
+
+.. math::
+   :label: mooringLineNormalDragEquationN
+
+   \mathbf{D}_n = - C_{D,n} {\rho}_f A_{n} \mathbf{v}_{r,n} \left| \mathbf{v}_{r}  \right|
+
+.. math::
+   :label: mooringLineNormalDragEquationT
+
+   \mathbf{D}_t = - C_{D,t} {\rho}_f A_{t} \mathbf{v}_{r,t} \left| \mathbf{v}_{r}  \right|
+
+where:   
+
+* :math:`{C_{D,n}}` and :math:`{C_{D,t}}` are the drag coefficients in the normal and the tangential directions of the segment, respectively,
+* :math:`{\mathbf{v}_r}` is the velocity of the segment mass center relative to fluid flow,
+* :math:`{\mathbf{v}_{r,n}}` and :math:`{\mathbf{v}_{r,t}}` are the components of :math:`{\mathbf{v}_r}` in the normal and the tangential directions of the segment, respectively,
+* :math:`{A_n}` and :math:`{A_t}`  are the cross-sectional areas in the normal and tangential directions of the segment, respectively, 
+* :math:`{\rho_f}` is fluid density. 
+
+.. _mooringLineSegments:
+
+.. figure:: images/theory/mooring-line-segments.*
+   :width: 4.1 in
+
+   Discrete segments of a mooring line and the mass particle representation of the segments    
+
+.. _mooringLineForces:
+
+.. figure:: images/theory/mooring-line-forces.*
+   :width: 4.1 in 
+
+   Forces applied on a segment of mooring line  
+
+The forces applied on a segment are sketched in the figure below. At each time step of fluid flow calculation, :eq:`mooringLineMotionEquation` is integrated explicitly for :math:`{\mathbf{v}_p}` using a 
+sub-time step algorithm: the time step is divided into sub-time steps to integrate the equation to 
+ensure numerical stability. Mass center location of the segment is calculated by integrating  :math:`{\mathbf{v}_p}` over 
+the sub-time steps. The instantaneous mooring line shape is determined by the updated locations of all the 
+segment mass centers. 
+
+For initial condition, the mooring lines are assumed to be in static equilibrium. Their shapes are 
+calculated by numerical integration of  :eq:`mooringLineMotionEquation` with :math:`{\mathbf{D}_n}` and :math:`{\mathbf{D}_t}` replaced by a high 
+artificial drag so that equilibrium state can be obtained quickly. The first guess of a mooring line 
+shape is a straight line between its two end points. 
+
+Mooring lines are allowed to be partially or completely outside the computational domain. When a line 
+is anchored deep in water, depending on the vertical size of the computational domain, the lower part of the line 
+can be located below the domain bottom where there is no computation of fluid flow. In this case, it 
+is assumed that a uniform water current exists below the domain for that part of mooring line, and the 
+corresponding drag force is evaluated based on the uniform deep water velocity. 
+
+Mooring line failure can be simulated using the model. At each time step, the maximum tension 
+force of a mooring line is computed and compared with the Minimum Breaking Load (MBL) which is the 
+lowest amount of tension force required to break the mooring line. If the former is equal or greater 
+than the latter, the mooring line breaks at the location of the maximum tension force. 
+
+Interactions between the mooring lines and the tethered moving objects are implemented by data 
+exchange: the moving objects provide instantaneous locations of the tether points of the mooring 
+lines, and the mooring line model supplies tension forces on the moving objects.
+
+The model has limitations. It does not consider bending stiffness of mooring lines. When 
+mooring line networks are simulated, free nodes are not allowed.   
+
+
+.. index:: dissolving solute model
+
+.. index::
+   single: models; dissolving solute
+
+.. _DissolvingSolidSoluteModel:
+
+Dissolving Solid Solute Model
+==================================
+
+Dissolution of solid solute in liquid may be of interest in several
+applications - from solution mining to food processing to medical
+applications. This section describes a model for dissolving solid solute in
+fluids and tracking the solute in the brine.
+
+The dissolution of solid solute increases the density of the fluid and thus
+may affect the flow. In addition, as the solute is dissolved, the flow domain
+increases. The model accounts for the basic physical phenomena, such as mass
+transfer at the interface between solid and fluid, the change of volume and
+shape of the solid solute, diffusion and convection of the dissolved solute in
+fluid and, finally, the change in fluid density, viscosity and surface tension
+coefficient.
+
+The amount of dissolved solute in fluid is represented with its mass
+concentration :math:`C`. The transport equation for :math:`C` is
+
+.. math::
+   :label: transportEquationForC
+
+
+   \frac{{\partial C}}{{\partial t}} + ({\mathbf{u}} \cdot \nabla )C = \nabla  \cdot (D\nabla C) + Q
+
+where :math:`\mathbf u` is the fluid velocity and :math:`D` is the diffusion
+coefficient of the dissolved solute in the fluid. The mass flux of solute,
+:math:`Q`, at the fluid/solid boundary is defined as
+
+.. math::
+   :label: massFluxOfSoluteQatFluidSolidBoundary
+
+   Q = \kappa ({C_{\rm{SAT}}} - C)
+
+where |kappa| is the constant mass transfer coefficient and :math:`C_{\rm{SAT}}` is
+the solute saturation concentration. The fluid mixture density |rho| is assumed
+to be a linear function of concentration:
+
+.. math::
+   :label: fluidMixtureDensityRho
+
+   \rho  = {\rho _0} + \alpha  \cdot C
+
+where :math:`\rho _0` is the density of pure liquid and |alpha| is a constant
+obtained experimentally. Accordingly, the fluid volume varies with the
+concentration, also linearly:
+
+.. math::
+   :label: fluidVolumeVariesWithConcentration
+
+   V = {V_0}\left[ {1 + \left( {1 - \alpha } \right)\frac{C}{{{\rho _0}}}} \right]
+
+The mixture density coefficient :math:`\alpha` may take values in the range between :math:`1
+- {\rho _0}/{\rho _s}` for substitutional solutes (\ :math:`\rho _s` is the
+solid solute density), when the solvent molecules are completely displaced by
+the larger molecules of the solute, and 1.0 for interstitial solutes, when the
+smaller solute molecules fit perfectly in the spaces between the molecules of
+the solvent.
+
+For example, the density of the saturated sea water (brine) at room temperature
+is about 26% greater than the density of fresh water, while its volume increases
+by 13%, resulting in :math:`\alpha = 0.5`.
+
+Note that there is no change to the mixture volume upon dissolution when
+:math:`\alpha = 1.0`. This assumption can also be used as a simplification of
+the model if:
+
+* the velocity of the interface controlled by the dissolution rate is small compared to the average fluid velocity; and
+* solute concentrations are small compared to fluid density.
+
+The flow equations are
+
+.. math::
+   :label: flowEquations
+
+   \begin{gathered}
+   \nabla  \cdot {\mathbf{u}} = S \hfill \\
+   \frac{{\partial {\mathbf{u}}}}{{\partial t}} + ({\mathbf{u}} \cdot \nabla ){\mathbf{u}} =  - \frac{1}{\rho }\nabla P + \frac{1}{\rho }\nabla  \cdot (\mu \nabla {\mathbf{u}}) + {\mathbf{g}} \hfill \\
+   \end{gathered}
+
+with :math:`P` being fluid pressure, |mu| viscosity and :math:`g` gravity. The
+source term :math:`S` accounts for the change in the position of the boundary
+between fluid and solid solute as well as for the increase in the fluid specific
+volume (see Eq. :eq:`sinkTermSinContinuityEquation`).
+
+The Fractional Area/Volume Obstacle Representation method (|favor|) is used to
+represent the changing geometry of the solid solute. To account for the presence
+of solid solute in the flow domain, and its change in volume and shape as it is
+dissolved in the fluid, a variant of :ref:`GmoModelTh` model has
+been developed. While the standard GMO model describes the motion of rigid
+objects moving through the flow domain, the solute model tracks the change of
+the solid solute boundary of the otherwise stationary dissolving component. Both
+models use time-dependent area and volume fractions to represent the changing
+geometry in the fixed rectangular grid. These variables are updated at every
+time step to reflect the changes in component's boundary location. Fluid
+quantities such as pressure and velocity must be initialized in newly-opened
+cells. Volume sources and sinks are also computed at the moving boundaries to
+maintain continuity of the fluid and solid.
+
+In the augmented model, the geometry component representing the solid solute is
+designated as a component of a type *dissolving*: it is stationary but changes
+shape and volume. It is designated with the input variable
+:envvar:`IFOBDISS(nob)`\ =1, where ``nob`` is the component number. The area and volume
+fractions are recomputed at every time step to reflect the gradual dissolution
+of the solid solute. The primary variable representing such geometry component
+is the relative (fractional) volume of solid solute in a cell, which is the
+ratio of the solid volume in the cell to the total cell volume:
+
+.. math::
+   :label: ratioOfSolidVolumeInCellToTotalCellVolume
+
+   {V_{f,{\rm{solute}}}} = {V_{\rm{solute}}}/{V_{\rm{cell}}} \quad 0 \leq {V_{f,{\rm{solute}}}} \leq 1.0
+
+The open volume fraction in cell, or volume fraction, is then
+
+.. math::
+   :label: openVolumeFraction
+
+   {V_f} = 1.0 - {V_{f,{\rm{solute}}}}
+
+The area fraction at a cell face, :math:`A_f`, is computed from the volume
+fractions in the two cells sharing the face.
+
+The rate of change of the solid solute content in a computational cell is defined is:
+
+.. math::
+   :label: solidSolidContentComputationalCell
+
+   \frac{{dV{f_{\rm{solute}}}}}{{dt}} = \frac{{QdA}}{{{\rho _S}{V_{\rm{cell}}}}}
+
+where:
+
+* :math:`dA` is the wetted area of solid surface in the cell and
+* :math:`\rho _s` is the density of solid solute.
+
+The sink term :math:`S` in the continuity equation, Eq. :eq:`flowEquations`,
+reflecting continuity of fluid and solid at the interface and the change in
+fluid volume as solute is dissolved, is:
+
+.. math::
+   :label: sinkTermSinContinuityEquation
+
+   S = \frac{{dV{f_{\rm{solute}}}}}{{dt}} + \frac{{QdA}}{{{\rho _0}{V_{\rm{cell}}}}}\left( {1 - \alpha } \right) = \frac{{QdA}}{{{V_{\rm{cell}}}}}\left( {\frac{1}{{{\rho _s}}} + \frac{{1 - \alpha }}{{{\rho _0}}}} \right)
+
+|
+
+.. _schematicInterfaceRegionNumericalModel:
+
+.. figure:: images/theory/schematic-interface-region-numerical-model.*
+   :alt: Schematic of the interface region in the numerical model
+   :width: 4.1 in
+
+   A schematic of the interface region in the numerical model. The shaded area
+   to the right of the interface is occupied by a dissolving component
+   representing the solid solute whose shape and volume vary with time. The
+   dissolved solute is distributed in the fluid within the volume adjacent to
+   the interface marked by the thin dashed line. The thick dashed line shows the
+   volume of solid solute in cell.
+
+The amount of solute dissolved in a given time increment, :math:`dm=QdAdt`, is
+distributed over a fluid volume adjacent to the interface equal to the volume of
+the mesh cell containing the interface (thin dashed-line rectangle in the figure
+above. If the interfacial cell is only partially filled with fluid, then part of
+the dissolved solute will be apportioned to a neighboring cell. Such averaging
+of the solute concentration makes the solution less dependent on the position of
+the interface within a cell and is consistent with the control volume approach,
+where each volume is associated with a single solute concentration value.
+
+The dissolution rate of the solid solute is assumed to be limited by diffusion,
+that is, the dissolved solute must diffuse away from the interface before more
+can be dissolved. The volume of solute dissolved in a time increment :math:`dt`
+per unit surface area is :math:`Qdt`. In the same period of time, the amount of
+solute that diffuses from the interface into the bulk is approximately
+:math:`\rho \sqrt {Ddt} ({C_{\rm{SAT}}} - C)`. Comparing the two expressions imposes
+a limit on the effective solute mass transfer coefficient:
+
+.. math::
+   :label: massTransferCoefficient
+
+   {\kappa _{\rm{eff}}} = {\text{min}}\left( {\kappa ,\rho \sqrt {\frac{D}{{dt}}} } \right)
+
+Once the dissolved solute has been apportioned to the control volumes, diffusion
+and convection take over and may further redistribute the solute within the
+mixture.
+
+.. index:: combustible object model
+
+.. index::
+   single: models; combustible objects
+
+.. _CombustibleObjectModel:
+
+Combustible Object Model
+==================================
+
+The combustion of solid propellant is of interest in rocket engine design. This section 
+describes a model for the burning of solid propellant in gas.
+
+The burning of the propellant results in increased temperature and pressure of the surrounding gas. 
+In response, stresses and deformations develop in the solid propellant. In addition, as propellant 
+is being spent, the flow domain increases. It is of interest to predict these changes. The model 
+has the following properties:
+
+1. The combustion rate is controlled by gas pressure using a power function with empirical coefficients;
+#. The chemistry of the combustion reaction is not modeled;
+#. The spent solid propellant is converted into gas with equivalent mass which is then transported according to the dynamically computed pressure and velocity fields as well as diffusion;
+#. Density of the combustion gas is calculated from the ideal gas equation-of-state (EOS);
+#. Direct turbulence effects on the burn rate are ignored; 
+#. The calculation of stresses and deformations in the combusting component can also be included.
+
+The numerical approach is similar to that used in :ref:`DissolvingSolidSoluteModel`. The combustible
+solid is represented by a special type of geometry component. The mass of the solid is converted to 
+fluid based on a calculated mass transfer rate. Mass, energy and momentum sources are applied at the 
+interface of the solid propellant. The shape of the solid is adjusted using the area and volume fractions. 
+
+The combustion mass flow rate at the gas/propellant boundary, :math:`Q_{M}`, is defined as 
+
+.. math::
+   :label: combustionmasssource
+
+   Q_{M} = \rho_{\rm{solid}} (a \cdot P^{b})
+
+where :math:`\rho_{\rm{solid}}` is the solid propellant density, :math:`P` is the gas pressure at the interface 
+and :math:`a` and :math:`b` are user-defined empirical constants. The expression in the parenthesis in 
+:eq:`combustionmasssource` is effectively the normal speed of the interface.
+
+The energy produced by the reaction, :math:`Q_{E}`, is
+
+.. math::
+   :label: combustionenergysource
+
+   Q_{E} = Q_{M} C_{P} T_{\rm{burn}}
+
+where :math:`C_{P}` is the gas specific heat at constant pressure, and :math:`T_{\rm{burn}}` is the user-defined 
+combustion temperature.
+
+The mass source is assumed to be of the *stagnation* type, i.e., the initial velocity of the exhaust gas 
+is zero. As a result of this assumption, no additional source term is present in the momentum equations.
+
+The Fractional Area/Volume Obstacle Representation method (|favor|) is used to
+represent the changing geometry of the combusting solid object. To account for the presence
+of the propellant in the flow domain, and its change in volume and shape as it is
+dissolved in the fluid, a variant of :ref:`GmoModelTh` model has
+been developed. While the standard GMO model describes the motion of rigid
+objects moving through the flow domain, the combustible object model tracks the change of
+the propellant's boundary of the otherwise stationary combustible component. Both
+models use time-dependent area and volume fractions to represent the changing
+geometry in the fixed rectangular grid. These variables are updated at every
+time step to reflect the changes in component's boundary location. Fluid
+quantities such as pressure and velocity must be initialized in newly-opened
+cells. Volume sources and sinks are also computed at the moving boundaries to
+maintain continuity of the fluid and solid.
+
+In the augmented model, the geometry component representing the propellant is
+designated as a component of a type :menuselection:`Combusting`: it is stationary but changes
+shape and volume. It is designated with the input variable
+:envvar:`IFOBBURN(nob)`\ = 1, where ``nob`` is the component number. The area and volume
+fractions are recomputed at every time step to reflect the gradual diminishing
+of the propellant. The primary variable representing such geometry component
+is the relative (fractional) volume of solid in a cell, which is the
+ratio of the solid volume in the cell to the total cell volume:
+
+.. math::
+   :label: ratioOfPropellantVolumeInCellToTotalCellVolume
+
+   V_{f,{\rm{combust}}} = V_{\rm{combust}}/V_{\rm{cell}} \quad 0 \leq V_{f,{\rm{combust}}} \leq 1.0
+
+The open volume fraction in cell, or volume fraction, is then
+
+.. math::
+   :label: openVolumeFractionCombust
+
+   {V_f} = 1.0 - {V_{f,{\rm{combust}}}}
+
+The change in the cell solid propellant content is then
+
+.. math::
+   :label: changeofpropellantincell
+
+   \frac{dV{f_{\rm{combust}}}}{dt} = \frac{{Q_{M}dA}}    {\rho_{\rm{solid}}   V_{\rm{cell}}}
+
+where :math:`dA` is the area of solid propellant  surface in cell.
+
+|
+
+.. _schematicInterfaceRegionCombustionModel:
+
+.. figure:: images/theory/schematic-interface-region-combustion-model.*
+   :alt: A schematic of the interface region.
+   :width: 4.1 in
+
+   A schematic of the interface region in the numerical model. The shaded area
+   to the right of the interface is occupied by a combustible component
+   representing the solid propellant whose shape and volume vary with time. The
+   reaction gas is distributed in the fluid within the volume adjacent to
+   the interface marked by the thin dashed line. The thick dashed line shows the
+   volume of solid propellant in cell.
+
+
+The amount of propellant burned in a given time step :math:`dt`, :math:`dM = Q_{M} dA dt`, and energy are 
+distributed over the gas volume immediately adjacent to the interface. Once the mass and energy have been 
+apportioned to the control volume, diffusion and convection processes take over.
+
+A mass transport equation is solved for the gas produced by the reaction. The solution is output as the
+mass fraction of the combustion gas in the mixture with the initial gas (presumably air) and can be viewed
+in the post-processor along with other spatial variables. The properties of the gas initially in the cavity
+are assumed to be the same as those of the combustion gases, which, of course, is not always true. However,
+the errors introduced by this assumtpion descrease as the initial gas is expelled from the cavity. Therefore,
+the properties of the compressible fluid #2 should correspond to those of the combustion gas.
+
+If the elastic stresses within the solid propellant are to be modeled, the Fluid Structure Interaction
+model (:ref:`FsiTseModelsTh`) needs to be deployed, with the combustible component designed as of type
+FSI (:ref:`fsiTseModelSetupMR`). As the shape and volume of the solid propellant vary with time, so too 
+does the Finite Element mesh  used to simulate the elastic stresses: in regions where the solid fuel has 
+burned away, the elements are eliminated from the simulation and the resulting pressure of the gas 
+is applied to the newly exposed solid surface.
+
+In order to use this model, the mesh for the combustible component needs to be
+generated by turning on the  Fluid Structure Interaction or Thermal Stress
+Evolution (FSI/TSE) model temporarily and turning off the  combustible
+component flag (:envvar:`ifobburn(nob)` =0). The mesh file created should be
+saved following which, the  FSI/TSE model can be turned off and the
+combustible component flag can be turned back on (:envvar:`ifobburn(nob)` =0).
+The mesh generated  should be used during the simulation using the
+:envvar:`iffem(nob)` =1 and :envvar:`ffem(nob)` = :file:`fe_mesh_file.FEMESH`
+flags. This completes  the setup for a combustible component.
+
+
+.. ###############################################
+.. import shared documentation
+.. include:: ../shared/theory/models/lost-foam.rst
+.. include:: ../shared/theory/models/porous-media.rst
+.. ###############################################
+
+.. index:: capillary pressure
+
+.. _CapillaryPressureTh:
+
+Capillary Pressure
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Within a saturated porous medium, the effects of surface tension on the
+fluid/gas interface may be significant if the fluid is strongly wetting or
+non-wetting relative to the porous material. This capillary pressure arises
+because of the high surface curvatures present in the tiny pores of the
+material. When the material is wetted by the fluid (i.e. the static contact
+angle is less than :math:`{90}^{\circ}`), absorption and wicking of the fluid
+into a porous medium occurs. When the fluid and porous material are 
+non-wetting, the opposite occurs and external pressure must be applied to force
+fluid into the material. The strength of the wetting or non-wetting dynamics
+of the porous medium are defined by the *capillary pressure*.
+
+The value of the capillary pressure is based on the average pore diameter, the
+surface tension of the imbibing fluid, and the static contact angle to the
+porous material and can be estimated using
+
+.. math::
+   :label: staticContactAngleToPorousMaterial
+
+   {P_{\rm{CAP}}} = \frac{{4\sigma \cos \theta }}{D}
+
+where |sigma| is the surface tension coefficient of the fluid, |Theta|  is the
+static contact angle of the fluid relative to the porous solid and :math:`D` is
+the average pore diameter. The most accurate method of determining
+:math:`P_{\rm{CAP}}` is experimentally through the use of laboratory apparatus.
+
+The capillary pressure represented by 
+Eq. :eq:`staticContactAngleToPorousMaterial` is applied to the liquid/gas
+interface (cells where the fluid fraction is less than 1.0 and greater than
+0.0).
+
+.. index::
+   pair: unsaturated flow; porous media, VOF
+
+.. _UnsaturatedFlowPorousMediaTh:
+
+Unsaturated Porous Media
+----------------------------------
+
+The unsaturated porous media model is designed to simulate two phases (usually
+liquid and gas) which intermingle to varying degrees throughout the porous
+medium. Therefore, the fluid fraction (akin to saturation, the local volume
+fraction of the pore space occupied by liquid) varies throughout. In |prod|, the
+Volume-of-Fluid technique (VOF) is used to track this fluid fraction, :math:`F`.
+
+The drag is a function of the saturation because there is more flow resistance
+within a porous material where there are two phases than a single phase. This is
+due to the many small bubbles which are difficult to dislodge because of the
+strong surface tension effects at small scales.
+
+.. index::
+   pair: drag calculations; unsaturated flow
+
+.. index::
+   single: drag; unsaturated flow
+
+.. _DragCalculationsInUnsaturatedFlowsTh:
+
+Drag Calculations in Unsaturated Flows
+--------------------------------------------------------
+
+Drag losses in unsaturated porous components, like capillary pressure effects,
+are primarily a function of saturation, as well as intrinsic characteristics
+of the media like pore size, tortuosity, and microscopic geometry. 
+
+Three drag models for unsaturated flow have been incorporated into |prod|.
+
+.. index::
+   single: drag; power law unsaturated drag model
+
+.. index:: power law; unsaturated drag model
+
+.. _powerlawdragTh:
+
+Power Law Unsaturated Drag Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The simplest of the unsaturated drag models relates the drag coefficient
+:math:`F_d` (described above) to a constant :guilabel:`Drag Coefficient A` and
+a power-law relation to saturation via :guilabel:`Drag Coefficient B`:
+
+.. math:: 
+   :label: powerLawModel
+
+   {F_d} = A \cdot S_e^{ - B}
+
+where: 
+
+* :math:`B` is the empirically-determined parameter :guilabel:`Drag Coefficient B` and describes 
+  the saturation relation, and it can be shown that :math:`B` = 3.0 theoretically represents a close-packed bed of uniform pore size, and
+* :math:`S_e` is the effective saturation of the porous material. The saturation :math:`S_e` is computed from:
+
+.. math::
+   :label: powerLawModelSaturationS
+
+   S_e = \frac{{F - {F_{\rm{CMN}}}}}{{{F_{\rm{CMX}}} - {F_{\rm{CMN}}}}}
+   
+where:
+
+* :math:`F` is the fluid fraction within the control volume,
+* :math:`F_{\rm{CMN}}` is the irreducible saturation and
+* :math:`F_{\rm{CMX}}` is the maximum saturation limit for the porous medium.
+* :math:`A` is the :guilabel:`Drag Coefficient A` and describes the drag when the media is fully saturated (units of inverse time), and can be empirically estimated as:
+
+.. math:: A = \frac{{\alpha \mu {{\left( {1 - \phi} \right)}^2}}}{{\rho \phi^2 d_{particle}^2}}
+
+where:
+
+* |alpha| is a constant that typically has a value around 180 (150 is correct for the Ergun equation for randomly-packed spheres), and 
+* :math:`\phi` is the porosity of the porous material.
+
+There is evidence that the relation to drag also follows hysteresis in the same
+way as capillary pressure; in this simplified power-law model, the uncertainties
+of the hysteresis effect are ignored.
+
+.. index::
+   single: drag; exponential unsaturated drag
+
+.. index:: exponential unsaturated drag model
+
+.. _exponentialUnsaturatedDragModelTh:
+
+Exponential Unsaturated Drag Model 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+More physically descriptive than the power-law model, the exponential model
+uses the following relation between the drag coefficient :math:`F_d` and the
+cell fluid fraction :math:`F`:
+
+.. math:: F_d = \frac{F}{F - F_{CMN} } \cdot A \cdot S_e^{ - P_{exp}} \cdot e^{B \left( {1 - S_e} \right)}
+
+where:
+
+* :math:`F_d` is the drag coefficient (described above),
+* :math:`F_{CMN}` is the :guilabel:`Minimum Saturation`,
+* :math:`A` is the :guilabel:`Drag Coefficient A`,
+* :math:`P_{exp}` is the :guilabel:`Pressure Curve Fitting Coefficient`, and
+* :math:`B` is the :guilabel:`Drag Coefficient B`.
+
+Choose values of :guilabel:`Minimum Saturation`, :guilabel:`Pressure Curve
+Fitting Coefficient`, and :guilabel:`Drag Coefficient B` to fit to known
+permeability data, and the :guilabel:`Drag Coefficient A` (units of inverse
+time) can be estimated using
+
+.. math:: A = \frac{{\alpha \mu {{\left( {1 - \phi} \right)}^2}}}{{\rho \phi^2 d_{particle}^2}}
+
+
+.. index::
+   single: drag; mualem unsaturated drag
+
+.. index:: mualem unsaturated drag model
+.. _mualemsUnsatDragModelRelativePermeabilityTh:
+
+Mualem's Unsaturated Drag Model for Relative Permeability 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This model has a strong experimental basis and defines permeability :math:`K` as
+the product of the saturated permeability :math:`K_0` (units of area) and a
+relative permeability :math:`K_r` (dimensionless):
+
+.. math:: K = {K_0} \cdot {K_r}
+
+:math:`K_r` is defined as a function of effective saturation :math:`S_e` (defined above)
+and the dimensionless parameter :math:`B` (\ :guilabel:`Drag Coefficient B`):
+
+.. math:: K_r = \sqrt {S_e} {\left[ {1 - {{\left( 1 - S_e^{\frac{1}{B}} \right)}^B}} \right]^2}.
+
+All porous drag models in |prod| relate permeability :math:`K` to a calculated
+drag function :math:`F_d`:
+
+.. math:: K = \frac{{\phi \mu }}{{\rho {F_d}}}.
+
+In this model, :math:`K_0`, the saturated permeability is set by the reciprocal of the
+:guilabel:`Drag Coefficient A` (represented by :math:`A` below):
+
+.. math:: K_0 = \frac{{\phi \mu }}{{\rho A}}.
+
+The resulting drag coefficient :math:`F_d` is:
+
+.. math:: {F_d} = { \frac{A}{\sqrt {S_e} {{\left[ {1 - {{\left( {1 - S_e^{\frac{1}{{B}}}} \right)}^{B}}} \right]}^2}}}
+   
+
+.. index:: capillary pressure, unsaturated flows
+
+.. _CapillaryPressureInUnsaturatedFlowsTh:
+
+Capillary Pressure in Unsaturated Flows
+--------------------------------------------------------
+The capillary pressure model in porous media can be used only in one-fluid,
+free-surface flows. There are two models that describe the relationship
+between saturation and capillary pressure: the :guilabel:`Simplified capillary
+pressure` model and a more thorough :guilabel:`Van Genuchten capillary pressure`
+model :cite:`Niemi-Bodvarsson-1988`.
+
+.. index::
+   single: capillary pressure; simplified unsaturated capillary pressure
+
+.. index:: simplified unsaturated capillary pressure model
+
+.. _simplifiedUnsaturatedCapPressModelTh:
+
+Simplified Unsaturated Capillary Pressure Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The capillary pressure is a function of the local saturation. In regions of
+the medium where the saturation is low, there are multiple interfaces with a
+high degree of curvature and a resulting very high capillary pressure.
+Conversely, in saturated regions, there are few free surfaces and the capillary
+pressure is near zero.
+
+In |prod|, there are two capillary pressure curves computed: one for when the
+material is draining (i.e., the saturation is going down) and the other for when
+the material is filling (i.e., the saturation is going up). The relationship
+between capillary pressure and saturation is shown in the diagram below for
+advancing flows (filling curve) and receding flows (draining curve).
+
+   .. image:: images/theory/draining-filling-curves.*
+      :alt: Draining and Filling Curve
+      :width: 4.1 in
+   
+The draining curve is defined as
+
+.. math::
+   :label: drainingCurve
+
+   {P_{{\rm{CAP}},{\rm{DRAIN}}}} = {P_{\rm{BUB}}}{S^{ - {P_{\exp }}}}
+
+where:
+
+* :math:`P_{\rm{BUB}}` is the maximum capillary pressure at saturation condition :math:`F = F_{\rm{CPMX}}` and
+* :math:`S` is the saturation.
+
+The bubbling pressure, :math:`P_{\rm{BUB}}`, is defined as
+
+.. math::
+   :label: bubblingPressure
+
+   {P_{\rm{BUB}}} = {P_{\rm{PCMX}}}{\left( {\frac{{{F_{\rm{PCMX}}} - {F_{\rm{CMN}}}}}{{{F_{\rm{CMX}}} - {F_{\rm{CMN}}}}}} \right)^{{P_{\exp }}}}
+
+The filling curve is defined as
+
+.. math::
+   :label: fillingCurve
+
+   {P_{{\rm{CAP}},{\rm{FILL}}}} = {P_{\rm{BUB}}}({S^{ - {P_{\exp }}}} - 1)
+
+.. note::
+
+   The filling and draining curves are always equidistant and separated by the
+   value of bubbling pressure.
+
+.. index::
+   pair: draining curves; filling curves
+
+.. index:: capillary pressure
+
+.. _DrainingFillingCurvesTh:
+
+Transition between Draining and Filling Curves
+""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+When a local region of the material switches between filling to draining (or
+vice versa), the capillary pressure follows a scanning curve between the curves.
+The slope of this scanning curve is computed from the local slope of the
+draining curve, plus 10 times the local difference between the target curve
+(either draining or filling) and the locally computed pressure until the
+scanning curve intersects the target curve.
+
+If a simulation is expected to involve only the filling or draining of a region,
+then it is only necessary to specify the appropriate capillary 
+pressure-versus-saturation curve. However, when there are alternating filling and draining
+transients, then both curves must be considered and some means must be provided
+to numerically transition between these processes. Experimentally it is observed
+that the transition occurs along a "scanning" curve. This curve must have a
+slope that is larger than the slopes of the filling and draining curves,
+otherwise it would not be possible to pass between them. Because no experimental
+data has been found for guidance, we have arbitrarily set the slope of the
+scanning curve. We use a value equal to the slope of the draining curve at the
+current value of :math:`F` plus an additional slope computed as the difference
+between the filling and draining curve pressures at saturation :math:`F` divided
+by a change in saturation of 0.1.
+
+When evaluating :math:`P_{\rm{CAP}}`, which is done in the user-accessible subroutine
+:program:`pcapcl`, a first guess for the new capillary pressure at time step :math:`n+1` is
+obtained from the previous time-step value by assuming a variation along the
+scanning curve:
+
+.. math::
+   :label: subroutinePcapclF
+
+   P_{\rm{CAP}}^{n + 1} = P_{\rm{CAP}}^n + \frac{{d{P_{\rm{CAP}}}}}{{dF}}\left( {{F^{n + 1}} - {F^n}} \right)
+
+where \ :math:`d{P_{\rm{CAP}}}/dF` is the slope of the scanning curve at the
+current saturation. The new value is then tested against the filling and
+draining curve values :math:`P_{{\rm{CAP}},{\rm{FILL}}}` and
+:math:`P_{{\rm{CAP}},{\rm{DRAIN}}}` such that:
+
+.. math::
+   :label: testingAgainstFillingAndDrainingValues
+
+   \begin{gathered}
+   P_{\rm{CAP}}^{n + 1} = \max (P_{\rm{CAP}}^{n + 1},{P_{{\rm{CAP}},{\rm{FILL}}}}) \hfill \\
+   \\
+   P_{\rm{CAP}}^{n + 1} = \max (P_{\rm{CAP}}^{n + 1},{P_{{\rm{CAP}},{\rm{DRAIN}}}}) \hfill \\
+   \end{gathered}
+
+These tests ensure that the capillary pressure is between the limits imposed by the
+two curves, or in the case of only one curve, maintain :math:`P_{\rm{CAP}}` on that
+curve. This behavior can be customized by modifying the subroutine :program:`pcapcl`.
+
+.. index::
+   single: capillary pressure; Van Genuchten unsaturated capillary pressure
+
+.. index:: Van Genuchten unsaturated capillary pressure model
+.. _vanGenuchtenUnsaturatedCapPressModelTh:
+
+Van Genuchten Unsaturated Capillary Pressure Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A more physical form of the complex relationship between saturation, capillary
+pressure, and draining/wetting state of the fluid is provided by the :guilabel:`Van
+Genuchten capillary pressure` model illustrated below, with arrows showing the
+state path for a series of changes in wetting direction:
+
+  .. image:: images/model-reference/flow-in-porous-components-van-genuchten-capillary-pressure.*
+     :alt: Van Genuchten Capillary Pressure Model Hysteresis
+
+The numbers on the plot are from a typical saturation path with a porous
+material, which proceeds as follows:
+
+1. Begin draining from saturated media. Capillary pressure follows envelope.
+#. Reverse to filling. Capillary pressure follows 1st-order filling scanning curve.
+#. Reverse to draining. Capillary pressure follows 2nd-order draining scanning curve.
+#. Continue draining. Capillary pressure follows draining envelope.
+#. Minimum absolute saturation. Begin filling. Capillary pressure follows envelope.
+#. Reverse to draining. Capillary pressure follows 1st-order draining scanning curve.
+#. Reverse to filling. Capillary pressure follows 2nd-order filling scanning curve.
+#. Reverse to draining. Capillary pressure follows 3rd-order draining scanning curve.
+#. Finish experiment.
+
+The primary wetting and draining curves define the envelope of the capillary
+pressure for each porous media-liquid system. If the process switches between
+wetting and draining before filling or draining is complete, the capillary
+pressure follows scanning curves inside the envelope. There are an infinite
+number of wetting and draining scanning curves within the envelope, and the
+actual curve depends on the local saturation and capillary pressure when the
+reversal occurs. The model detailed by :cite:`Niemi-Bodvarsson-1988` has been
+enhanced to include the first-order draining and second-order wetting
+scanning curves.
+
+.. math:: 
+
+   p_{cap,wet} &= \alpha_w \left[ \left( \frac{1}{S_e} \right)^{\frac{1}{m_w}} - 1 \right]^{\frac{1}{n_w}} \\
+
+   p_{cap,drain} &= \alpha_d \left[ \left( \frac{1}{S_e} \right)^{\frac{1}{m_d}} - 1 \right]^{\frac{1}{n_d}}
+
+where:
+
+* :math:`p_{cap,wet}` is the wetting capillary pressure
+* :math:`\alpha_w` is the :guilabel:`Wetting Curve Alpha Coefficient` in units of pressure: you may need to convert literature values that are in units of inverse length (head)
+* :math:`m_w` is the :guilabel:`Wetting Curve m-exponent`, for soils often assumed to be :math:`1 - \frac{1}{n_w}`
+* :math:`n_w` is the :guilabel:`Wetting Curve n-exponent`
+* :math:`p_{cap,drain}` is the draining capillary pressure
+* :math:`\alpha_d` is the :guilabel:`Draining Curve Alpha Coefficient` in units of pressure like :math:`\alpha_w` and in soils is often assumed to equal :math:`\alpha_w`
+* :math:`m_d` is the :guilabel:`Draining Curve m-exponent`, for soils often assumed to be :math:`1 - \frac{1}{n_d}`
+* :math:`n_d` is the :guilabel:`Draining Curve n-exponent`, for soils often assumed to equal :math:`n_w`
+
+The curves should be defined from experimental data and curve-fit using the
+equations above. The first-, second-, and higher-order draining curves define
+intermediate capillary pressure vs. saturation paths depending on whether the
+direction of flow has reversed once, twice, or more than twice. The scanning
+curve shapes are set by the primary curve parameters, which should be
+determined experimentally.
+
+.. index:: rigid body dynamics, non-inertial reference frame
+
+.. _RigidBodyDynamicsNIRFTh:
+
+Rigid Body Dynamics for Non-Inertial Reference Frame
+======================================================
+
+Sometimes we are interested in the flow of fluids within rigid bodies whose
+motion is itself influenced by the dynamics of the fluid. In such cases, one may
+apply the coupled rigid body dynamics model, integrated into |prod|, to predict
+the combined motion of the rigid body and the associated fluid.
+
+We shall consider the evaluation of the motion of a rigid body relative to
+inertial space. Furthermore, we shall suppose that the body contains internal
+cavities (tanks) which may be partially filled with fluid. We wish to simulate
+the motion of the rigid-body center of mass, its rotation (attitude) and the
+motion of the fluid in its tanks. The simulation is to predict these attributes
+as time progresses. Evaluation of the fluid motion and the resulting forces and
+torques are performed with the usual |prod| algorithms, allowing inclusion of a
+wide variety of physical phenomena.
+
+.. _inertialAndBodyFixedCoordinates:
+
+.. figure:: images/theory/inertial-and-body-fixed-coordinates.*
+   :alt: Inertial and body-fixed coordinates
+   
+   Inertial and body-fixed coordinates
+
+To perform this simulation, we define both inertial and body-fixed reference
+frames, as shown in the figure above. We label the Cartesian coordinates fixed
+in the rigid body as (*x*, *y*, *z*) and those fixed in inertial space 
+as (*x'*, *y'*, *z'*). The fluid dynamics calculation uses the body-fixed 
+coordinates as usual. Newton's equation for the location of the rigid-body 
+center of mass is solved in the inertial reference frame, but the equations 
+for the rotation of the body are formulated in body-fixed coordinates.
+
+We also define a gravitating-body reference frame, the origin of which coincides
+with that of the inertial coordinate system but which may rotate at a constant
+rate about the *z'* axis. We use a spherical coordinate system for this
+reference frame to reduce confusion. This reference frame is not used in the
+formulation of the equations of motion. It is intended as a convenience for the
+user, directly relating the computed results to an earth (or solar) based
+system.  It should be kept in mind that an earth-based reference frame is 
+only approximately inertial. Corrections to this approximation can be
+implemented elsewhere in the solution algorithm if necessary.
+
+The effect of the gravitational force emanating from this body is included in
+the rigid-body motion equations and the fluid motion equations. Torques
+resulting from the gravitational field have been ignored.
+
+Provision has been made for the inclusion of both environmental and control
+forces and torques. This is accomplished by including subprograms that can
+easily communicate with the other portions of the solution algorithm. These
+subprograms do not model specific sources of force and torque but are available
+for the user to include such phenomena as aerodynamic and geomagnetic effects or
+control jets and/or flywheels.
+
+Sometimes more than one tank may influence the motion of the rigid body. |prod|
+can account for this by treating each tank as an independent flow region (or
+component). The fluid forces and torques are then summed over all components to
+determine their effect on the rigid body.
+
+.. seealso::
+   * :ref:`NirfTh` notation
+   * :ref:`RigidBodyDynamicsAlgorithmTh`  
+   * :ref:`NonInertialReferenceFrameTh` equations
+   * :ref:`RigidBodyDynamicsNIRFTh`
+   * :ref:`centrifugalCastingMR`
+   * :ref:`gravitySectionMR`
+   * :ref:`impulsiveMotionMR`
+   * :ref:`nonInertialReferenceFrameMotionMR`
+   * :ref:`smoothTabularMotionMR`
+
+.. index:: erosion, suspended sediment, packed sediment, bed-load transport
+
+.. index:: sediment scour model
+
+.. index::
+   single: models; sediment scour
+
+.. _SedimentScourModelTh:
+
+Sediment Scour Model
+======================
+
+The sediment scour model assumes multiple non-cohesive sediment species with different properties including grain size, mass density, critical shear stress, angle of repose and parameters for entrainment and transport. For example, medium sand, coarse sand and fine gravel can be categorize into three different species in a simulation. The model is applicable for both 3D and shallow water flows. 
+It estimates the motion of sediment by predicting the
+erosion, advection and deposition of sediment. It does so by:
+
+* Computing the suspended sediment transport.
+* Computing the settling of sediment due to gravity.
+* Computing the entrainment of the sediment due to bed shearing and flow perturbations.
+* Computing the bed-load transport, whereby sediment grains roll, hop or slide along the packed sediment bed.
+
+In |prod| this is done by considering two states in which sediment can exist:
+suspended and packed sediment. Suspended sediment is typically of low
+concentration and advects with fluid flow. Packed sediment exists at the critical packing fraction which can 
+be defined by the user (default value is 0.64). Only a thin surface layer of grains 
+of the packed sediment (in the thickness 
+of a few grain diameters) can move in the form of bed-load transport.  
+
+Sediment is entrained by the picking up and re-suspension due
+to shearing and small eddies at the packed sediment interface. Because it is not
+possible to compute the flow dynamics about each individual grain of sediment,
+an empirical model must be used. The model used here is based on Mastbergen and
+Van den Berg :cite:`Mastbergen-VandenBerg-2003`. Also, the Soulsby-Whitehouse 
+equation :cite:`Soulsby-1997` can be used to predict the critical Shields parameter, or a
+user-defined parameter can be specified. By default, the critical Shields parameter is 0.05.
+The first step to computing the
+critical Shields parameter is calculating the dimensionless parameter
+:math:`d_i^*`:
+
+.. math::
+   :label: DimensionlessParameterDistar
+
+   {d_{*,i}} = {d_i}{\left[ {\frac{{{\rho _f}\left( {{\rho _i} - {\rho _f}} \right)\left\| {\mathbf{g}} \right\|}}{{{\mu_f ^2}}}} \right]^{\frac{1}{3}}}
+
+where:
+
+* :math:`\rho _i` is the density of the sediment species :math:`i`,
+* :math:`\rho _f` is the fluid density. 
+* :math:`d_i` is the diameter.
+* :math:`\mu _f` is the dynamic viscosity of fluid.
+* :math:`\left\| {\mathbf{g}} \right\|` is the magnitude of the acceleration of gravity :math:`\mathbf g`.
+
+From this, the dimensionless critical Shields parameter is computed using
+the Soulsby-Whitehouse equation :cite:`Soulsby-1997`:
+ 
+.. math::
+   :label: Soulsby-WhitehouseEquation
+
+   {\theta _{{\rm{cr}},i}} = \frac{0.3}{1+1.2d_{*,i}} + 0.055\left[ {1 - \exp \left(  -0.02 d_{*,i} \right)} \right]
+
+The critical Shields parameter can be modified for sloping surfaces to
+include the angle of repose. The idea here is that at sloping interfaces, the
+packed sediment is less stable and is thus more easily entrained by 
+fluid moving down the slope. The modification further alters :math:`{\theta_{{\rm{cr}},i}}`
+:cite:`Soulsby-1997`:
+
+.. math::
+   :label: shieldsParameterModifiedForSlopingSurfacesIncludeAngleOfRepose
+
+   \theta '_{{\rm{cr}},i} = \theta _{{\rm{cr}},i}\frac{{\cos \psi \sin \beta  + \sqrt {{{\cos }^2}\beta {{\tan }^2}{\varphi _i} - {{\sin }^2}\psi {{\sin }^2}\beta } }}{{\tan {\varphi _i}}}
+
+where |beta| is the angle of slope of bed, :math:`\varphi _i` is the user-defined angle of
+repose for sediment species :math:`i` (default is :math:`32^\circ`), and |psi| is the angle between the flow
+and the upslope direction. For flow directly up a slope :math:`\psi
+= 0^\circ`.
+
+The local Shields parameter is computed based on the local bed shear stress, |tau|:
+
+.. math::
+   :label: localShieldsNumber
+
+   {\theta _i} = \frac{\tau }{{\left\| {\mathbf{g}} \right\|{d_i}({\rho _i} - {\rho _f})}}
+
+where |tau| is calculated using the law of the wall and the quadratic law of bottom shear stress for 3D 
+turbulent flow and shallow water turbulent flow, respectively, with consideration of bed surface roughness. 
+It is assumed that the Nikuradse roughness of the bed surface :math:`k_s` is proportional to the local median grain
+diameter in packed sediment :math:`d_{50,\rm{packed}}`,
+
+.. math::
+   :label: NikuradseRoughness
+
+   k_s=c_{\rm{rough}} d_{50,\rm{packed}}
+
+where :math:`c_{\rm{rough}}` is a user-defined coefficient with default value 2.5. 
+
+The entrainment lift velocity of sediment is then computed as
+:cite:`Mastbergen-VandenBerg-2003`:
+
+.. math::
+   :label: entrainmentLiftVelocityOfSediment
+
+   {{\mathbf{u}}_{{\rm{lift}},i}} = {\alpha _i}{{\mathbf{n}}_{\mathbf{s}}}d_*^{0.3}{\left( {{\theta _i} - {{\theta '}_{{\rm{cr}},i}}} \right)^{1.5}}\sqrt {\frac{{\left\| {\mathbf{g}} \right\|{d_i}\left( {{\rho _i} - {\rho _f}} \right)}}{{{\rho _f}}}}
+
+where :math:`\alpha _i` is the entrainment parameter, whose recommended value is
+0.018 :cite:`Mastbergen-VandenBerg-2003`, and :math:`\mathbf {n_s}` is the
+outward pointing normal to the packed bed interface.
+:math:`{{\mathbf{u}}_{{\rm{lift}},i}}` is then used to compute the amount of packed
+sediment that is converted into suspension, effectively acting as a mass
+source of suspended sediment at the packed bed interface. After that, 
+the sediment is transported with fluid flow.
+
+Deposition is the process that the sediment grains either settle out of suspension onto packed bed 
+due to their weight or come to rest in bed-load transport. 
+Settling and entrainment of grains are opposite processes and often occur at the same time. The settling velocity equation proposed by Soulsby :cite:`Soulsby-1997` is used:
+
+.. math::
+   :label: settlingVelocity 
+
+   {{u}_{{\rm{settling}},i}} = \frac {\nu_f}{d_i} \left[\left(10.36^2+1.049d^3_*\right)^{0.5}-10.36\right]
+
+where :math:`\nu_f` is the kinematic viscosity of fluid. It is assumed that the settling motion is in the gravity direction,
+
+.. math::
+   :label: settlingVelocityVector
+
+   {{\mathbf{u}}_{{\rm{settling}},i}} = {u_{{\rm{settling}},i}}\frac{{{\mathbf{g}}}}{{\left\| {{\mathbf{g}}} \right\|}}
+
+To account for the particle-particle interactions, Richardson-Zaki"s correlation is applied to the settling velocity,
+
+.. math::
+   :label: richardsonZaki
+
+   {{\mathbf{u}}_{{\rm{settling}},i}^*}= {{\mathbf{u}}_{{\rm{settling}},i}} {\left( {1 - min(0.5,c_s)} \right)^\zeta }
+
+where :math:`c_s` is the total volume fraction of suspended sediment. The exponent :math:`\zeta` is
+
+.. math::
+   :label: richardsonZakimMltiplier
+
+    {\zeta} = {\zeta _{{\text{user}}}}{\zeta _0}
+
+:math:`\zeta _{\text{user}}` is the Richardson-Zaki coefficient multiplier (default is 1.0), 
+and  :math:`\zeta _0` is the Richardson-Zaki coefficient defined by:
+
+.. tabularcolumns:: |p{4cm}|p{4cm}|
+
+.. _richardsonZakiCoefficientTable2:
+
+.. list-table::
+   :widths: 50 50
+   :header-rows: 0
+   :stub-columns: 1
+   :class: longtable
+
+   * - Re < 0.2
+     - :math:`{\zeta _0} = 4.35`
+
+   * - 0.2 < Re < 1.0
+     - :math:`{\zeta _0} = 4.35/{Re}^{0.03}`
+
+   * - 1.0 < Re < 500
+     - :math:`{\zeta _0} = 4.45/{Re}^{0.1}`
+
+   * - 500 < Re
+     - :math:`{\zeta _0} = 2.39`
+
+Here :math:`Re` is the particle Reynolds number,
+
+.. math::
+   :label: particleRe
+
+    {Re} = {\frac{{d_i}{u_{\rm{settling},i}}}{\nu _f}}
+
+Bed-load transport is the mode of sediment transport due to rolling or bouncing
+over the surface of the packed bed of sediment. Users can choose one of the
+three equations for volumetric transport rate of sediment per width of bed: 
+
+* Meyer, Peter and Müller  :cite:`Meyer-Peter-Müller-1948` 
+
+.. math::
+   :label: bed-loadTransportMPM
+
+   {\Phi _i} = {\beta _{\rm{MPM},i}}{\left( {{\theta _i} - {{\theta '}_{{\rm{cr}},i}}} \right)^{1.5}} c_{b,i}
+
+* Nielsen  :cite:`Nielsen-1992`    
+
+.. math::
+   :label: bed-loadTransportNielsen
+
+   {\Phi _i} = {\beta _{\rm{Nie},i}} {\theta _i}^{0.5} {\left( {{\theta _i} - {{\theta '}_{{\rm{cr}},i}}} \right)} c_{b,i}
+
+* Van Rijn  :cite:`VanRijn-1984`   
+
+.. math::
+   :label: bed-loadTransportVanRijn
+
+   {\Phi _i} = {\beta _{\rm{VR},i}} {d _{*,i}}^{-0.3} {\left( {\frac{\theta _i} {{\theta '}_{{\rm{cr}},i}} -1.0} \right)^{2.1}} c_{b,i}
+  
+where :math:`\beta _{\rm{MPM},i}`, :math:`\beta _{\rm{Nie},i}` and :math:`\beta _{\rm{VR},i}` are coefficients typically equal to 8.0, 12.0 and 0.053, respectively.  :math:`c_{b,i}` is the volume fraction of species :math:`i` in the bed material. It does not exist in the original equations but is added in Eq. :eq:`bed-loadTransportMPM`, :eq:`bed-loadTransportNielsen` and :eq:`bed-loadTransportVanRijn` to account for the effect of multiple species. :math:`{\Phi _i}` is the dimensionless bed-load transport rate, and is
+related to the volumetric bed-load transport rate, :math:`q_{b,i}`,
+by
+
+.. math::
+   :label: volumetricbed-loadTranportRatePerUnitWidth
+
+   {q_{b,i}} = {\Phi _i}{\left[ {\left\| {\mathbf{g}} \right\|\left( {\frac{{{\rho _i} - {\rho _f}}}{{{\rho _f}}}} \right)d_i^3} \right]^{\frac{1}{2}}}
+  
+
+Equation :eq:`volumetricbed-loadTranportRatePerUnitWidth` computes the bed-load
+transport rate in units of volume per bed width per time. Another piece of information
+needed is an estimate of the bed-load thickness, i.e., the thickness of the
+saltating sediment. The relationship chosen to estimate this thickness is 
+:cite:`VanRijn-1984`.
+
+.. math::
+   :label: thicknessSaltatingSediment
+
+   \frac{{{\delta _i}}}{{{d_i}}} = 0.3d_*^{0.7}{\left( {\frac{{{\theta _i}}}{{{{\theta '}_{{\rm{cr}},i}}}} - 1} \right)^{0.5}}
+
+To compute the motion of the sediment in each computational cell, the
+value of :math:`q_{b,i}` is converted into the bed-load velocity by :cite:`VanRijn-1984`:
+
+.. math::
+   :label: motionOfSedimentEachComputationalCell
+
+   {u_{{\rm{bedload}},i}} = \frac{{{q_{b,i}}}}{{{\delta _i}{c_{b,i}}{f_b}}}
+
+where :math:`f_b` is the critical packing fraction of the sediment. The bed-load velocity is assumed to be in the
+same direction as that of the fluid flow adjacent to the packed bed interface. 
+ 
+For each species, the suspended sediment concentration is calculated by solving its own transport equation,
+
+.. math::
+   :label: transportEquationEachSedimentSpecies
+
+   \frac{{\partial {C_{s,i}}}}{{\partial t}} + \nabla  \cdot ({\mathbf{u}_{s,i}}{C_{s,i}}) = 
+    \nabla  \cdot \nabla (D C_{s,i})
+
+
+Here :math:`C_{s,i}`  is the suspended sediment mass concentration of species  :math:`i`, which is defined as the sediment mass per volume of fluid-sediment mixture; :math:`D` is the diffusivity; :math:`\mathbf {u}_{s,i}` is the suspended sediment velocity. It is noted that each sediment species in suspension moves at its own velocity that is different from those of fluid and other species. This is because grains with different mass density and sizes have different inertia and receive different drag force.
+
+Correspondingly, the suspended sediment volume concentration :math:`c_{s,i}` is defined as the volume of suspended sediment species  :math:`i` per volume of the fluid-sediment mixture. It is related to :math:`C_{s,i}` by
+
+.. math::
+   :label: masstovolumesedimentconcentration
+
+   {c_{s,i}}=\frac{C_{s,i}} {\rho_i}                                                                   
+
+To solve equation Eqs. :eq:`transportEquationEachSedimentSpecies` for :math:`C_{s,i}`, :math:`\mathbf {u}_{s,i}` must be calculated first. It is assumed that: 1) the grains in suspension do not have strong interactions with each other; 2) the velocity difference between the suspended grains and the fluid-sediment mixture is mainly the settling velocity of grains, :math:`\mathbf {u}_{settling,i}`. 
+:math:`\mathbf {u}_{s,i}` is thus evaluated using
+
+.. math::
+   :label: speciesVelocity
+
+   \mathbf {u}_{s,i}=\mathbf{\bar u}+\mathbf {u}_{settling,i} c_{s,i}
+
+where :math:`\mathbf{\bar u}` denotes velocity of the fluid-sediment mixture.
+
+To avoid convective numerical instability, there is restriction of time step for suspended sediment transport. 
+Sediment grains are not allowed to be transported across more than one computational cell in one time step. The effect of fractional area and volume open to sediment advection must also be considered. The stability condition is
+
+.. math::
+   :label: stabilitySediment
+
+   \delta t < {\rm{CON}} \cdot \min \left( {\frac{{{V_F}\delta {x}}}{{{A_x}u_{s,i}}},{\text{ }}\frac{{{V_F}\delta {y}}}{{{R_i}{A_y}v_{s,i}}},{\text{ }}\frac{{{V_F}\delta {z}}}{{{A_z}w_{s,i}}}} \right)
+
+where :math:`(u_{s,i}, v_{s,i}, w_{s,i},)` are the x, y and z components of  :math:`\mathbf {u}_{s,i}`, 
+respectively, and :math:`CON < 1.0` is a safety factor to account for "worst cases" of convective numerical 
+instability. 
+
+The model has limitations. It is not valid for cohesive soils including silts and clays. Caution should be taken when it is applied with excessively large grains due to the limited validity of the sediment theory used in the model. Due to the empirical nature of the sediment theory and other approximations such as those in the turbulence models, parameter calibration may be needed in applications to achieve the best results. 
+
+Note that alterations to the empirical equations for lifting velocity, critical Shields parameter and
+settling velocity in shallow water can be made by modifying the user-customizable routines :file:`scour_lift.F`,
+:file:`scour_critic.F` and :file:`scour_uset.F90`.
+
+.. index:: shallow water model
+
+.. index::
+   single: models; shallow water
+
+.. _ShallowWaterModelTh:
+
+Shallow Water Model
+===========================
+
+A shallow flow is one in which the horizontal extent is much larger than the
+vertical extent. Examples include flow in the sea, estuaries, large lakes,
+seasonal floods, liquid coatings, lubricating films, and water on automobile
+windshields.
+
+It can be shown that in a shallow flow, the vertical acceleration of fluid is
+negligible, and it is a good approximation to the full three-dimensional model
+to replace all flow variables by their depth-averaged equivalents
+:cite:`Pedlosky-1987`. The three-dimensional equations of motion are then reduced
+to two-dimensional equations in the horizontal plane, referred to as the
+shallow water equations or shallow water model. With this model, the fluid
+free surface is free to exhibit wave phenomena. Non-uniform horizontal
+boundaries (e.g., a sloping beach) may also induce small deviations from
+purely horizontal flow. In this sense the depth-averaged approximation still
+includes some three-dimensional effects. There are excellent discussions of
+the shallow-water equations and their higher order refinements in references
+:cite:`Knauss-1978`, :cite:`Su-Gardner-1969`.
+
+The shallow water model in |prod| assumes that the shallow direction is the
+z-direction and gravity is in the negative z-direction. When depth averaging
+is applied to the three-dimensional momentum equation in the z-direction, it
+reduces to a hydrostatic relation for the pressure
+
+.. math::
+   :label: shallowWaterModel01
+
+   p = {p_0} + \rho g(\eta  - z)
+
+in terms of fluid density |rho|, vertical acceleration of gravity :math:`g`,
+fluid elevation |eta| measured from :math:`z = 0`, and external pressure at the
+free surface :math:`p_0` which includes the effect of surface tension force.
+
+In |prod|, shallow water flow can reside in only one horizontal layer of control
+volumes. Pressure in an
+element containing a free-surface is defined as
+
+.. math:: 
+   :label: shallowWaterModel02
+
+   p = {p_0} + \rho gH
+
+where :math:`H` is the surface elevation measured from the bottom of the grid.
+:math:`H` is, therefore, the sum of the fluid depth and obstacle height
+
+.. math:: 
+   :label: shallowWaterModel03
+
+   H = F{V_F}\delta z + \left( {1 - {V_F}} \right)\delta z
+
+where :math:`\delta z` is the cell size in z-direction,
+:math:`F` is fluid fraction, and
+:math:`V_F` is volume fraction (fraction of open volume in cell). 
+
+The volume/area blockages used in the |favor| method can be interpreted as the
+height of the bottom contour. When making this correspondence, it is only
+necessary to make sure all the approximations used in |prod| consider the solid
+blockage to lie at the bottom of the control volumes.
+
+Applying depth-averaging to the three-dimensional momentum equations in the
+horizontal direction, we obtain the momentum equations for the shallow water
+model,
+
+.. math:: 
+   :label: shallowWaterModel04
+
+   \frac{{\partial u}}{{\partial t}} + \frac{1}{{{V_F}}}\left( {u{A_x}\frac{{\partial u}}{{\partial x}} + v{A_y}\frac{{\partial u}}{{\partial y}}} \right) =  - \frac{1}{\rho }\frac{{\partial p}}{{\partial x}} + {G_x} + \frac{{{\tau _{s,\,x}} + {\tau _{b,\,x}}}}{{\rho \,d}} + 2\Omega v {\text ,}
+
+|
+
+.. math:: 
+   :label: shallowWaterModel05
+
+   \frac{{\partial v}}{{\partial t}} + \frac{1}{{{V_F}}}\left( {u{A_x}\frac{{\partial v}}{{\partial x}} + v{A_y}\frac{{\partial v}}{{\partial y}}} \right) =  - \frac{1}{\rho }\frac{{\partial p}}{{\partial y}} + {G_y} + \frac{{{\tau _{s,\,y}} + {\tau _{b,\,y}}}}{{\rho \,d}} - 2\Omega u {\text ,}
+
+where :math:`u` and :math:`v` are the depth-averaged :math:`x` and :math:`y`
+velocities, respectively. One additional assumption made in Eqs.
+:eq:`shallowWaterModel04` and :eq:`shallowWaterModel05` is that viscous
+diffusion in horizontal direction is negligible compared to the diffusion in the
+vertical diffusion. The third term on the right-hand side accounts for the
+depth-averaged effect of the viscous diffusion in the vertical direction, which
+is related to the sum of the wind shear stress at the free surface and the shear
+stress at the bottom of the reservoir. Here :math:`d` is the water depth;
+:math:`{\tau _{s,\,x}}` and :math:`{\tau _{s,\,y}}` are the wind shear stress on
+fluid surface in :math:`x` and :math:`y` directions, respectively; :math:`{\tau
+_{b,\,x}}` and  :math:`{\tau _{b,\,y}}` are the :math:`x` and :math:`y`
+components of the bottom shear stress, respectively.
+
+:math:`{\tau _{s,\,x}}` and :math:`{\tau _{s,\,y}}` follow the quadratic law 
+  
+.. math:: 
+   :label: shallowWaterModel06
+
+   {\tau _{s,x}} = {\rho _a}{C'_D}W_{10,x}^{}\sqrt {W_{10,x}^2 + W_{10,y}^2}
+
+|
+
+.. math:: 
+   :label: shallowWaterModel07
+
+   {\tau _{s,y}} = {\rho _a}{C'_D}W_{10,y}^{}\sqrt {W_{10,x}^2 + W_{10,y}^2} 
+
+where:
+
+* :math:`\rho _a` is the air density;
+* :math:`{C'_D}` is the wind drag coefficient which is typically equal to 0.003;
+* :math:`W_{10,x}` and :math:`W_{10,y}` are the :math:`x` and :math:`y` velocities of wind at 10m above the water surface, respectively. 
+
+Eq. :eq:`shallowWaterModel07` assumes that the
+wind speed is much larger than that of the fluid.
+
+For turbulent flow, the shallow water model does not use any of the turbulent
+models in |prod|. Instead, it uses a quadratic law to evaluate the bottom shear
+stress,
+
+.. math:: 
+   :label: shallowWaterModel08
+
+   {\tau _{b,x}} =  - \rho \,{C_D}u\sqrt {{u^2} + {v^2}} \qquad \qquad {\tau _{b,y}} =  - \rho \,{C_D}v\sqrt {{u^2} + {v^2}}
+
+where :math:`C_D` is the drag coefficient. :math:`C_D` can be either
+user-defined with the default value of 0.0026 or calculated using surface roughness or Manning's roughness coefficient :math:`n` (or, Manning's :math:`n` )
+
+The equation to calculate :math:`C_D` using surface roughness is 
+
+.. math:: 
+   :label: dragCoefficientShallowWater
+
+   C_D=\left[ \frac{\kappa}{B+\rm{ln} \left( z_0/d \right)} \right]^2
+
+where :math:`\kappa =0.4` is Von Karman constant, B=0.71, :math:`z_0={k_s}/{30}`, :math:`k_s` is surface roughness. 
+
+If Manning's :math:`n` is used instead of surface roughness, the equation to calculate :math:`C_D` is
+
+.. math:: 
+   :label: dragCoefficientShallowWater_n
+
+   C_D=\frac{n^2 g}{d^{\frac{1}{3}}} 
+
+where :math:`g` is the gravitational acceleration. It is noted that n is a dimensional parameter, and its dimension is :math:`T L^{\frac{1}{3}}`, where :math:`T` is time, and :math:`L` is length. It is also seen that :math:`C_D` is inversely proportional to :math:`d^{\frac{1}{3}}`. To avoid unphysically high value of :math:`C_D` when water is too shallow, a cap is applied to :math:`C_D`, which is a user-specific parameter with a default value of 0.1.
+
+For laminar flow, :math:`{\tau _{b,\,x}}` and :math:`{\tau _{b,\,y}}` are calculated
+as
+
+.. math:: 
+    :label: shallowWaterModel09
+ 
+    {\tau _{b,x}} =  - {k_\mu }\mu \frac{u}{{d/2}} {\text ,} \qquad   {\tau _{b,y}} =  - {k_\mu }\mu \frac{v}{{d/2}}
+
+where :math:`{k_\mu }` is the vertical viscosity multiplier that is designed to
+compensate for the lack of velocity profile in the vertical direction. For a
+steady-state shear flow that has a quadratic velocity profile in the vertical
+direction, the theoretical value of :math:`{k_\mu }` is 1.5.
+
+The last term in equation :eq:`shallowWaterModel04` or :eq:`shallowWaterModel05`
+represents the Coriolis force due to rotation of the Earth. The Coriolis force
+is important for geophysical fluid flow such as those in the sea, estuaries and
+large lakes. In this term, :math:`\Omega` is the vertical component of the earth's
+angular velocity,
+
+.. math:: 
+   :label: shallowWaterModel10
+
+   \Omega  = {\Omega _e}\sin \varphi
+ 
+where:
+
+* :math:`{\Omega _e} = 7.29 \times {10^{ - 5}}` rad/s is the Earth's angular speed and
+* :math:`\varphi` is the constant (i.e., average for the flow domain) latitude. It is positive in the northern hemisphere and negative in the southern hemisphere.
+
+Depth-averaging the three-dimensional continuity equation and then substituting
+the fluid elevation using Eq. :eq:`shallowWaterModel03`, and considering the
+appropriate area fractions for the x and y directions, we arrive at 
+
+.. math:: 
+   :label: shallowWaterModel11
+
+   \frac{{\partial {V_F}F}}{{\partial t}} + \frac{{\partial u{A_x}F}}{{\partial x}} + \frac{{\partial v{A_y}F}}{{\partial y}} = 0
+
+This is precisely the equation for :math:`F` used in the VOF method for flow
+in a single, horizontal layer of control volumes, provided there is no :math:`F`
+transport in the z-direction, which is a restriction necessary in the 
+shallow-flow model (see Eq. :eq:`fluidInterfacesAndFreeSurfaces1`). The VOF method for
+shallow water flow allows fluid to move into dry regions or withdraw from
+previously wet regions.
+
+Equations :eq:`shallowWaterModel02`, :eq:`shallowWaterModel04`,
+:eq:`shallowWaterModel05` and :eq:`shallowWaterModel11` can be solved
+explicitly, in which case, there is a limitation on the size of the time step
+to prevent gravity waves from moving more than one grid cell in one time step.
+An implicit, iterative solution is also available that removes the limitation
+on the time-step size. The implicit option is used by default.
+
+The shallow water model can be combined with the full 3D solution in a
+*hybrid* approach, using a multi-block mesh. A given mesh block is either of
+the shallow water or 3D type. Blocks of either type are interfaced with each
+other at their common boundaries. Blocks can be linked with each other 
+(non-overlapping) and/or nested within other blocks (fully overlapping).
+
+A mesh block of the shallow water type must have at least *two* cells defined
+in the :math:`z`-direction, with the bottom one containing all the fluid and
+the upper layer void of fluid and geometry. There is no reason to have more
+than two cells since fluid is only allowed to exist in the *bottommost* layer
+of cells. Therefore, the cell size in the :math:`z`-direction should be
+sufficiently large to contain all fluid in that layer *throughout* the
+simulation. An error is generated if fluid crosses into an upper layer of
+cells. Cells in the second layer of :math:`z`-cells should be left empty of
+fluid and geometry. This will enable the model to properly treat the free
+surface in the lower layer.
+
+.. index:: sludge settling model
+
+.. index::
+   single: models; sludge settling
+
+.. _SludgeModelTh:
+
+Sludge Settling Model
+===========================
+
+The sludge settling model is used to simulate sludge settlement in septic tanks, clarifiers and other sewage treatment equipment. Sludge motion is governed by both sewage flow and gravity-caused settling. The transport equation for sludge is
+
+.. math::
+   :label: transportEquationSludge
+
+   \frac{{\partial {C_{s}}}}{{\partial t}} + \nabla  \cdot ({\mathbf{u}_{s}}{C_{s}}) = 
+    \nabla  \cdot \nabla (D_{s} C_{s})
+
+where :math:`C_s` denotes sludge concentration that is defined as sludge mass per unit volume of sludge-water mixture; :math:`D_s` is sludge diffusion coefficient;  :math:`\mathbf{u}_{s}` is total sludge velocity and can be written as
+
+.. math::
+   :label: sludgeVelocity
+
+        \mathbf{u}_{s} =\mathbf{u} + \mathbf{u}_{settle}   
+
+where :math:`\mathbf{u}` is velocity of sludge-water mixture; :math:`\mathbf{u}_{settle}` is sludge settling velocity and is always in the direction of gravity.  In general, :math:`\mathbf{u}_{settle}` value decreases with increasing :math:`C_s`. It drops to zero when :math:`C_s` reaches a critical value, :math:`C_{max}`, which is the maximum sludge concentration in settling tanks. In the fully settled regions, :math:`C = C_{max}`, and sludge stops settling but its advection with fluid flow continues. :math:`C_{max}` is a user-specified input parameter in the model.
+
+Users are allowed to define :math:`{u}_{settle}` as a function of :math:`C_s` using either tabulated data or the Vesilind equation :cite:`Vesilind-1968`,
+
+.. math::
+   :label: sludgeSettlingVelocity
+
+      u_{settle}= U_0 e^{-n C_s}
+
+where :math:`U_0` is the maximum sludge velocity, and n is Vesilind parameter with the dimension of volume/mass. When :math:`C = C_{max}`, :math:`{u}_{settle}` is set to zero in the model.
+
+
+
+.. ###############################################
+.. import shared documentation
+.. include:: ../shared/theory/models/solidification-shrinkage-and-porosity.rst
+.. include:: ../shared/theory/models/turbulence.rst
+.. include:: ../shared/theory/models/wall-heat-transfer.rst
+.. ###############################################
+
+
+.. *******************************************************************************
+.. NUMERICAL APPROXIMATIONS
+.. *******************************************************************************
+
+.. ###############################################
+.. import shared documentation
+.. include:: ../shared/theory/approximations/overview.rst
+.. include:: ../shared/theory/approximations/notation.rst
+.. include:: ../shared/theory/approximations/solution-method.rst
+.. include:: ../shared/theory/approximations/momentum-equations.rst
+.. ###############################################
+
+
+.. index:: second-order method
+
+.. _SecondOrderMethodTh:
+
+Second-Order Method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The approximations described in :ref:`FirstOrderMethodTh` have truncation errors proportional to the
+first power of the time increment :math:`\delta t` and, if :math:`\alpha \neq 0`
+or the mesh is non-uniform, the first power of the space increments :math:`dx`,
+:math:`dy` and :math:`dz`. The advantage of these first-order approximations is
+that they are simple and easy to keep computationally stable. For a great many
+applications they also provide good solutions. In some cases, however, it may be
+too costly to use the mesh resolution necessary for an accurate first-order
+solution. When this happens, it may be useful to employ a second-order accurate
+approximation for the advective and viscous accelerations. Two optional 
+second-order approximation schemes for the momentum equations can be requested through
+the input data. The essence of the first scheme is a double pass through the
+advection and viscous subroutines. In the first pass, the first-order method is
+used with the donor cell parameter :math:`\alpha = 1.0`. These new velocities
+are then stored in the arrays for the previous time velocities. The first-order
+calculations are then repeated, but this time the parameter is set to
+:math:`\alpha = -1.0`. Finally, the results of the two calculations are averaged
+to give the desired second-order approximation to the new time-level velocities.
+
+These approximations are second-order in time because the first pass uses time-\
+:math:`n` velocities, while the second pass uses (first-order) approximations
+for velocities at time :math:`n + 1`. The average then has level :math:`n +
+\raise.5ex\hbox{$\scriptstyle 1$} \kern-.1em/ \kern-.15em\lower.25ex
+\hbox{$\scriptstyle 2$}`, which is second-order in :math:`\delta t`. Likewise,
+using :math:`\alpha = + 1.0` in the first pass and :math:`\alpha = -1.0` in the
+second results in an average |alpha|-value of zero, which is second-order in
+:math:`dx`, :math:`dy`, :math:`dz` if the mesh is uniform. (See Reference 
+:cite:`Hirt-1978` for a more complete analysis of this second-order scheme.)
+
+This algorithm is the least numerically diffusive of the three advection methods
+available in |prod|. However, it does not possess the transportive property,
+which in standard upstream differencing schemes ensures that a flow disturbance
+only propagates downstream from its initial location. In addition, this method
+is the most CPU intensive. Finally, this method may occasionally generate a
+numerically unstable solution for flows with transient free-surfaces.
+
+
+.. ###############################################
+.. import shared documentation
+.. include:: ../shared/theory/approximations/immersed-boundary-method.rst
+.. include:: ../shared/theory/approximations/density-evaluation.rst
+.. include:: ../shared/theory/approximations/shear-stress.rst
+.. include:: ../shared/theory/approximations/baffle-losses.rst
+.. include:: ../shared/theory/approximations/general-drag.rst
+.. include:: ../shared/theory/approximations/nirf.rst
+.. include:: ../shared/theory/approximations/pressure-solution.rst
+.. include:: ../shared/theory/approximations/scalar-advection.rst
+.. include:: ../shared/theory/approximations/diffusion-and-heat-transfer.rst
+.. include:: ../shared/theory/approximations/bcs.rst
+.. include:: ../shared/theory/approximations/mesh-block-bcs.rst
+.. ###############################################
+
+
+.. index:: Wave-absorbing layer at outflow boundary
+
+.. index::
+   single: boundary conditions; wave-absorbing layer; sponge layer; wave-absorbing component
+
+.. _spongeLayerTh:
+
+Wave-absorbing Layer (Sponge Layer) at Open Boundary
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In general, there are two technique categories to reduce reflection of periodic wave at an open boundary: 
+the radiation boundary condition and the absorbing layer or sponge layer method. The radiation boundary condition 
+presented in the preceding section may not work effectively for nonlinear wave or dispersed wave situation 
+because it is theoretically based on linear wave assumption. Different from the radiation boundary condition, 
+the absorbing layer method uses a region with additional 
+damping to dissipate wave before it reaches the open boundary and gets reflected. 
+This region, called wave-absorbing layer or sponge layer, 
+starts somewhere in the downstream area of the computational domain and ends at the open boundary, as shown in the figure below. 
+The method is theoretically simple and works effectively in practice. It is found that the combination the sponge 
+layer with the radiation boundary condition behaves the best to minimize wave reflection from the open boundary.  
+
+
+.. _spongeLayerFigure:
+
+.. figure:: images/theory/sponge-layer.*
+   :width: 4.1 in
+
+   Sponge layer to absorb wave motion at open boundary
+
+In the wave-absorbing layer, the Navier-Stokes equation is modified as
+
+.. math::
+   :label: spongeLayerEquation
+
+   \frac{\partial {\mathbf{U}}}{\partial t} + \mathbf{U} \cdot \nabla  \mathbf{U} = - \frac{1}{\rho} + \nabla \cdot \nabla (\nu \mathbf{U}) - c (\mathbf{U} - \mathbf{U}_{str})
+
+
+The last term :math:`- c (\mathbf{U} - \mathbf{U}_{str})` at the right hand side of the equation is the artificial damping force to dissipate wave motion, 
+
+where:  
+
+* :math:`c` is the damping coefficient with unit of 1/time, and 
+* :math:`\mathbf{U}_{str}` is the background stream velocity. 
+
+It is noted that the damping force is applied only to the wave motion while the background current is not affected. 
+
+In |prod|, a wave-absorbing layer can be defined either directly at an open mesh block boundary with 
+outflow or continuative boundary condition or by a special geometry component called wave-absorbing 
+component. A wave-absorbing component is completely open to fluid flow but exerts the damping force to 
+wave motion.The damping coefficient can be a 
+constant inside the absorbing layer or increases linearly with the distance from the starting side of 
+the absorbing layer 
+in the downstream direction.  :math:`c` is evaluated by
+
+.. math::
+   :label: spongeLayerDampingCoefficientEquation
+
+   c = c_0 + s \cdot \frac{c_1-c_0} {d}
+
+where: 
+
+* :math:`c_0` and :math:`c_1` are the damping coefficient at the starting and end sides of the sponge layer, respectively. 
+* :math:`s` is the distance in the downstream direction and measured from a point at the starting side of the absorbing layer. 
+* :math:`d` is the thickness of the sponge layer in downstream direction. 
+
+It is found that a gradual increase of the damping coefficient in the downstream direction usually works better to reduce wave 
+reflection. The default values of :math:`c_0` and :math:`c_1` are 0.0 and 1.0 :math:`s^{-1}`, respectively. 
+The recommended value of :math:`d` is one wavelength. 
+
+If :math:`\mathbf{U}_{str}` is not defined by users, it is calculated by the code by averaging the 
+mean fluid velocity of the sponge layer over a time scale that is either user-specified or 
+code-determined.  If determined by code, the time scale is equal to the period of the wave that is 
+simulated. It is divided into certain number of sub-time steps.  
+:math:`\mathbf{U}_{str}` is recalculated when time increases by one sub-time step. The time step of 
+flow computation must be smaller than the sub-time step for an accurate calculation of  
+:math:`\mathbf{U}_{str}` .  Since :math:`\mathbf{U}_{str}`   is updated during computation, it may 
+vary or fluctuate with time. 
+
+.. index:: periodic linear wave generator
+
+.. index::
+   single: wave generator; periodic linear
+
+.. _PeriodicLinearWaveGeneratorTh:
+
+Periodic Linear Wave Generator
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A periodic, linear, surface wave can be generated at a mesh boundary. The
+model is based on Airy's linear wave theory :cite:`Airy-1845`. As shown in the
+figure below, the linear wave is assumed to come from a flat bottom reservoir
+into the computational domain. A linear wave is characterized by the wave
+amplitude :math:`A`, wavelength |lambda|, angular frequency |omega| and wave
+number :math:`k = 2\pi /\lambda`. A uniform current may also exist, and its
+undisturbed velocity component in the wave propagation direction is :math:`U =
+{\rm{const}}`. For the equations in this section, a reference system (*x*,
+*z*) is established with its origin fixed at the mean free surface, +x going
+in the wave propagation direction and +z in the upward direction (when using
+the code, users can place the coordinate origin at any location but +z must be
+in the upward direction).
+
+.. _schematicDiagramLinearWaveFlatBottomReservoir:
+
+.. figure:: images/theory/linear-wave-from-flat-bottom-reservoir.*
+   :alt: Schematic diagram showing a linear wave coming from a flat bottom reservoir on the left into the computational domain through the mesh boundary
+   :width: 4.1 in
+
+   Schematic diagram showing a linear wave coming from a flat bottom reservoir
+   on the left into the computational domain through the mesh boundary
+
+The linear wave theory is based on the following assumptions:
+
+* fluid is incompressible, inviscid, irrational, two-dimensional flow;
+* the wave amplitude (\ :math:`A`) is small compared to the mean water depth (\ :math:`h`) and wavelength (|lambda|).
+
+With the above assumptions, the problem can be reduced to a linear potential
+flow problem. Please refer to :cite:`Lamb-1945` and :cite:`Dean-Dalrymple-1991`
+for more details. The free surface elevation :math:`\eta \left( {x,t} \right)`
+measured in the vertical direction from mean water surface, the velocity
+potential :math:`\varphi (x,z,t)`, and velocity components in x and z directions
+:math:`u(x,z,t)` and :math:`w(x,z,t)` are obtained as
+
+.. math::
+   :label: periodicLinearWaveGenerator1
+  
+   \eta &= A\,\cos (kx - \omega t + \phi ) \hfill \\
+   \\
+   \varphi (x,z,t) &= xU + \frac{{A\omega \,\,\cosh [k(z + h)]\,\,\sin (kx - \omega t + \phi )}}{{k\,\sinh (kh)}} \hfill \\
+   \\
+   u(x,z,t) &= U + \frac{{A\omega \,\,\cosh [k(z + h)]\,\,\cos (kx - \omega t + \phi )}}{{\sinh (kh)}} \hfill \\
+   \\
+   w(x,z,t) &= \frac{{A\omega \,\,\sinh [k(z + h)]\,\,\sin (kx - \omega t + \phi )}}{{\sinh (kh)}} \hfill \\
+
+where :math:`\phi` is the phase shift angle, :math:`t` is time.
+
+The dispersion equation in terms of wave speed :math:`c = \omega /k` is given by
+
+.. math::
+   :label: periodicLinearWaveGenerator2
+
+   {(c - U)^2} = \frac{g}{k}\tanh (kh)
+
+This relationship indicates that the wave frequency and wave length are not
+independent but are related: Users can specify either wave frequency or wave
+length; the other quantity is then calculated by the dispersion equation.
+
+The linear wave theory assumes a flat bottom reservoir and this assumption is
+required to generate the wave at the mesh boundary. Once the wave enters the
+computational domain, the bottom surface no longer needs to be flat, and flow
+can be inviscid, laminar or turbulent, in which case the wave may deviate from
+the analytical solution given by the equations above. Since the full 
+Navier-Stokes equations are solved inside the domain, nonlinear effects may develop.
+
+An irregular or random wave can also be simulated by defining multiple linear
+wave components with different wave amplitudes, frequencies, and initial phases
+at a mesh boundary. These wave components are superimposed at the boundary and
+propagates into the domain to form the desired wave (irregular or random wave).
+
+.. index:: Stokes wave generator
+
+.. index::
+   single: wave generator; Stokes
+
+.. _StokesWaveGeneratorTh:
+
+Stokes Wave Generator
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A fifth-order Stokes wave can be generated at a mesh boundary. The model is
+based on the fifth-order Stokes wave theory developed by Fenton :cite:`Fenton-1985`.
+Different from the linear (Airy) wave theory for *small*-amplitude progressive
+surface waves, the Stokes wave theory is a nonlinear theory for
+*limited*-amplitude progressive surface waves. It allows higher wave amplitude
+than the linear wave theory.
+
+.. _stokesWaveFromFlatBottomReservoir:
+
+.. figure:: images/theory/stokes-wave-from-flat-bottom-reservoir.*
+   :alt: Stokes wave entering the left side of a computational domain from a reservoir with flat bottom.
+   :width: 4.1 in
+
+   Stokes wave entering the left side of a computational domain from a reservoir
+   with flat bottom.
+
+As shown in the figure above, a wave train is assumed to come from a flat
+bottom reservoir into the computational domain through the mesh boundary. The
+reference system (x, z) is established with its origin fixed at the bottom, +x
+going in the wave propagation direction and +z in the upward direction (when
+using the code, users can place the coordinate origin at any location but +z
+must be in the upward direction). The wave is characterized by the wave height
+:math:`H` (measured vertically from trough to peak), wavelength |lambda| and
+wave period :math:`T`. The undisturbed water depth is *d=const*. Water
+elevation |eta| is time-dependent and measured along +z from the bottom to the
+water surface. A current may exist and its x-component of undisturbed velocity
+is *U=const*. The angular wave frequency |omega| and the wave speed :math:`c`
+are related to other parameters as
+
+.. math::
+   :label: stokesWaveGenerator1
+
+   \omega = \frac{{2\pi }}{T} = ck \quad \text{and} \quad c = \frac{\lambda }{T}
+
+where :math:`k` is the wave number,
+
+.. math::
+   :label: stokesWaveGenerator2
+
+   k = \frac{2\pi }{\lambda}
+
+The Stokes wave theory assumes potential flow, namely the fluid flow is
+incompressible and irrotational. The stream function :math:`\psi` thus exists and
+satisfies the Laplace equation
+
+.. math::
+   :label: stokesWaveGenerator3
+
+   {\nabla ^2}\psi = 0
+
+Fluid velocity components in x and z are given by
+
+.. math::
+   :label: stokesWaveGenerator4
+
+   u = \frac{{\partial \psi }}{{\partial x}} \quad \text{and} \quad v= - \frac{{\partial \psi }}{{\partial z}}
+
+With the further assumption that a wave crest exists at x=0 at t=0, the Laplace
+equation for :math:`\psi`, along with its boundary conditions at the free surface and
+the bottom, are solved using a perturbation method. The perturbation parameter
+is the dimensionless wave amplitude :math:`\varepsilon = {{kH} / 2}`, also known as the
+wave steepness. The solution for the water elevation and velocity with 
+fifth-order accuracy with respect to |varepsilon| is
+
+.. math::
+   :label: stokesWaveGenerator5
+
+   \eta (x,t) = d + \frac{\varepsilon }{k}\cos kX + \frac{{{\varepsilon ^2}}}{k}{B_{22}}\cos 2kX + \frac{{{\varepsilon ^3}}}{k}{B_{31}}\left( {\cos kX - \cos 3kX} \right) \hfill \\
+   \,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\, + \frac{{{\varepsilon ^4}}}{k}\left( {{B_{42}}\cos 2kX + {B_{44}}\cos 4kX} \right) + \,\, \hfill \\
+   \,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\frac{{{\varepsilon ^5}}}{k}\left[ { - \left( {{B_{53}} + {B_{55}}} \right)\cos kX + {B_{53}}\cos 3kX + {B_{55}}\cos 5kX} \right]\,\,, \hfill \\
+   \\
+   u(x,z,t) = U + {C_0}{\left( {\frac{g}{{{k^3}}}} \right)^{1/2}}\sum\limits_{i = 1}^5 {{\varepsilon ^i}} \sum\limits_{j = 1}^i {{A_{ij}}jk\cosh jkz\cos jkX},\, \hfill \\
+   \\
+   w(x,z,t) = {C_0}{\left( {\frac{g}{{{k^3}}}} \right)^{1/2}}\sum\limits_{i = 1}^5 {{\varepsilon ^i}} \sum\limits_{j = 1}^i {{A_{ij}}jk\sinh jkz\sin jkX} \hfill \\
+
+where :math:`X = x - ct` and :math:`kX = kx - \omega \,t`. The coefficient
+:math:`A_{ij}`, :math:`B_{ij}` and :math:`C_0` are nonlinear functions of
+:math:`kd` and are presented in :cite:`Fenton-1985`. It can be seen that the linear
+wave theory is the first-order approximation of the Stokes theory. In other
+words, the fifth-order Stokes theory is four-orders of |varepsilon| higher in
+accuracy than the linear wave theory.
+
+The wave number and wave frequency are not independent parameters but satisfy
+the nonlinear equation
+
+.. math::
+   :label: stokesWaveGenerator6
+
+   {\left( {\frac{k}{g}} \right)^{1/2}}U - \frac{\omega }{{{{\left( {gk} \right)}^{1/2}}}} + {C_0} + {\left( {\frac{{kH}}{2}} \right)^2}{C_2} + {\left( {\frac{{kH}}{2}} \right)^4}{C_4} = 0
+
+where :math:`C_0`, :math:`C_2` and :math:`C_4` are nonlinear functions of
+:math:`kd` :cite:`Fenton-1985`. It is found that the dispersion equation
+for linear wave is the first-order approximation of this relation without
+considering the last two terms at the left-hand side. As a result of this
+relation, when generating wave at a mesh boundary, the users cannot provide both
+wave length and wave period as input parameters at the same time. If a wave
+length is given, then the wave period (or wave frequency) is obtained easily
+from this equation. If wave period is known, instead, the wave length (or wave
+number) is calculated from the above equation iteratively. The first
+approximation of :math:`k` used in the iterations is :cite:`Fenton-1988`.
+
+.. math::
+   :label: stokesWaveGenerator7
+
+   k = \frac{{\alpha + {\beta ^2}{\text{sec}}{{\text{h}}^{\text{2}}}\beta }}{{(\tanh \beta + \beta \,{\text{sec}}{{\text{h}}^{\text{2}}}\beta \,)d}}
+
+|
+
+.. math::
+   :label: stokesWaveGenerator8
+
+   {\text{where}} \quad \alpha = {\omega ^2} d  / g 
+    \quad {\text{and}} \quad \beta = \alpha \sqrt {\coth \left(\alpha \right) } .
+
+This theory is applicable to waves in both deep and shallow water, but
+restrictions exist. The parameter |varepsilon| must be a small number, namely
+the wave's steepness must be small. Furthermore, the theory cannot work for
+waves that are long compared to the water depth. A reasonable upper limit for
+the wave length is :math:`T{\left( {g / d} \right)}^{1/2} \approx {\lambda / d}
+\approx 10` :cite:`Fenton-1985`. Beyond this limit, other theories (e.g., Fenton's
+Fourier series method and McCowan's solitary wave theory in the following
+sections) should be used. Finally, this theory is not valid for breaking
+waves. Users can also follow the figure below :cite:`LeMehaute-1976`, 
+:cite:`USArmy-Corps-of-Eng-2006` for the applicability ranges for linear wave, 
+Stokes wave and other wave theories.
+
+Waves in |prod| are generated at mesh boundaries. After entering the
+computational domain, a wave may transform to any type of wave with or without
+breaking. Once the wave enters the computational domain, the bottom no longer
+needs to be flat, and flow can be inviscid, laminar or turbulent, in which
+case the wave may deviate from the analytical solution given by the equations
+above. The wave may also break inside the computational domain.
+
+.. _applicabilityRangesOfVariousWaveTheories:
+
+.. figure:: images/theory/applicability-ranges-of-various-wave-theories.*
+   :alt: Applicability ranges of various wave theories
+   :width: 4.1 in
+
+   Applicability ranges of various wave theories 
+
+.. index:: Stokes and Cnoidal wave generator, Fourier series method
+
+.. index::
+   single: wave generator; Stokes and Cnoidal
+
+.. _StokesCnoidalWavesGeneratorTh:
+
+Stokes and Cnoidal Waves Generator (Fourier Series Method)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Cnoidal wave is a nonlinear oscillatory wave in shallow water, which has
+sharper crests and flatter troughs than a Stokes wave. In |prod|, it is
+generated using Fenton's Fourier series method :cite:`Fenton-1999`. In fact, this
+method is suitable for both Cnoidal and Stokes waves, and it provides 
+higher-order accuracy than Fenton's fifth-order theory for Stokes waves. It is thus
+the recommended generator for both Stokes and Cnoidal waves.
+
+In this method, the problem is defined in the same way as the Stokes wave
+problem in the preceding section. It is assumed that a steady-state wave train
+exists in a flat-bottom reservoir outside the computational domain, and it
+propagates into the computational domain through a mesh boundary (refer to the
+:ref:`figure in the Stokes wave section <stokesWaveFromFlatBottomReservoir>`).
+The wave profile and water velocity are obtained in the reservoir to provide
+the boundary condition for a wave simulation.
+
+Let :math:`d` and :math:`H` represent the undisturbed water depth and the wave
+height (measured vertically from wave trough to wave crest), respectively. A
+stationary reference system (\ :math:`x`, :math:`z`) is established in such a
+way that its origin is fixed at the bottom, :math:`+x` goes horizontally in
+the wave propagation direction, and :math:`+z` directs vertically upward (when
+using the code, users can place the coordinate origin at any location but +z
+must be in the upward direction). A current is assumed to exist and its
+x-component :math:`\bar u` is a constant. The wave speed :math:`c` and the
+angular wave frequency |omega| are related to other parameters as
+
+.. math:: 
+   :label: cnoidalWavesGenerator01
+
+   c = \frac{\lambda }{T}
+
+|
+
+.. math:: 
+   :label: cnoidalWavesGenerator02
+
+   \omega  = \frac{{2\pi }}{T} = ck
+
+where:
+
+* |lambda| is the wavelength,
+* :math:`k` is the wave number, :math:`k = {{2\pi} / \lambda }`, and
+* :math:`T` is the wave period.
+
+In this problem, the given variables are :math:`H`, :math:`d`, :math:`\bar u`,
+and |lambda| or :math:`T` (|lambda| and :math:`T` are related to each other thus cannot
+be given independently). A solution of the wave is obtained first in a moving
+reference system (\ :math:`X`, :math:`Z`) that travels with the wave at speed
+:math:`c` (note this solution is non-transient). A coordinate transformation is
+then conducted to find the transient solution of the wave in the stationary
+system (\ :math:`x`, :math:`z`). The transformation equations are,
+
+.. math:: 
+   :label: cnoidalWavesGenerator03
+
+   {\text {coordinates: }} \: x = X + ct {\text , } \quad Z = z
+
+|
+
+.. math:: 
+   :label: cnoidalWavesGenerator04
+
+   {\text {water velocity: }} \: u = U + c {\text , } \quad w = W
+
+where:
+
+* :math:`u` and :math:`w` denote the :math:`x` and :math:`z` components of water velocity in system (\ :math:`x`, :math:`z`), respectively;
+* :math:`U` and :math:`W` denote those in system (\ :math:`X`, :math:`Z`), respectively. 
+
+For the water current, transformation of its x-velocities between the two systems is 
+
+.. math:: 
+   :label: cnoidalWavesGenerator05
+
+   \bar u = \bar U + c
+
+where :math:`\bar U` is the x-velocity of the current in (\ :math:`X`,
+:math:`Z`) system.
+
+It is assumed that the flow is incompressible and irrotational. A stream function
+:math:`\psi (X,Z)` therefore exists in (\ :math:`X`, :math:`Z`) and satisfies
+the Laplace equation,
+
+.. math:: 
+   :label: cnoidalWavesGenerator06
+
+   {\nabla ^2}\psi (X,Z) = 0
+
+:math:`U` and :math:`W` are related to :math:`\psi (X,Z)` as
+
+.. math:: 
+   :label: cnoidalWavesGenerator07
+
+   \psi (X,Z) {\text , } \quad W = - \frac{{\partial \psi }}{{\partial X}}
+
+Two kinematic boundary conditions exist for equation
+:eq:`cnoidalWavesGenerator06`,
+
+.. math:: 
+   :label: cnoidalWavesGenerator08
+
+   \psi (X,0) = 0 \quad {\text{at bottom}}
+
+|
+
+.. math:: 
+   :label: cnoidalWavesGenerator09
+
+   \psi (X,\eta (X)) = Q {\text{ (at free surface }} Z = \eta (X){\text{)}}
+
+where :math:`Q` is the volume flow rate in :math:`X` direction per unit length
+in :math:`Y`, :math:`\eta` is water elevation measured from the bottom to the
+water surface. The Bernoulli equation on the free surface provides the third
+boundary condition, which is a dynamic boundary condition,
+
+.. math:: 
+   :label: cnoidalWavesGenerator10
+
+   \frac{1}{2}\left[ {{{\left( {\frac{{\partial \psi }}{{\partial X}}} \right)}^2} + {{\left( {\frac{{\partial \psi }}{{\partial Z}}} \right)}^2}} \right] + g\eta = R{\text{, (on free surface }}Z = \eta (X){\text{)}}
+
+where :math:`R` is a constant and :math:`g` is the absolute value of the
+gravitational acceleration.
+
+Assuming further that :math:`X = 0` and :math:`X = \lambda /2` correspond to the
+crest and trough of the wave, respectively, we use a Fourier series to represent
+:math:`\psi (X,Z)`,
+
+.. math:: 
+   :label: cnoidalWavesGenerator11
+
+   \psi (X,Z) = \bar UZ + \sqrt {\frac{g}{{{k^3}}}} \sum\limits_{j = 1}^N {{B_j}\frac{{\sinh jkZ}}{{\cosh jkd}}\cos jkX}
+
+where :math:`{B_j}\left( {j = 1,2, \ldots N} \right)` are dimensionless
+coefficients, :math:`N` is a finite integer.
+
+It is seen that Eq. :eq:`cnoidalWavesGenerator11` satisfies the Laplace equation
+:eq:`cnoidalWavesGenerator06` and the boundary condition
+:eq:`cnoidalWavesGenerator08` automatically. The other boundary conditions
+:eq:`cnoidalWavesGenerator09` and :eq:`cnoidalWavesGenerator10` are used to find
+:math:`B_j`. The truncation of the terms higher than :math:`N`\ -th order is the
+only mathematical approximation.
+
+The problem is solved numerically. Divide the wave from :math:`X = 0` to
+:math:`X = \lambda /2` into :math:`N` equal intervals, and let :math:`j = 1,2,
+\ldots N+1` denote the discrete points. The :math:`X` coordinate of point
+:math:`n` is :math:`{X_n} = {\left( {n-1} \right) \lambda}  / {\left( {2N} \right)}`, which
+gives :math:`k{X_n} = {{(n - 1)\pi }/N}`. At point :math:`n`, substitution
+of Eq. :eq:`cnoidalWavesGenerator11` into :eq:`cnoidalWavesGenerator09` and
+:eq:`cnoidalWavesGenerator10` yields
+
+.. math:: 
+   :label: cnoidalWavesGenerator12
+
+   \bar U\sqrt {k/g} \left({k \eta _n}\right) + \sum\limits_{j = 1}^N {{B_j}\frac{{\sinh jk{\eta _n}}}{{\cosh jkd}}\cos jk{X_n}}  - Q\sqrt {{k^3}/g} = 0
+
+|
+
+.. math:: 
+   :label: cnoidalWavesGenerator13
+
+   \begin{gathered}
+   \frac{1}{2}{\left( {U\sqrt {k/g} + \sum\limits_{j = 1}^N {j{B_j}\frac{{\cosh jk{\eta _n}}}{{\cosh jkd}}\cos jk{X_n}} } \right)^2} \hfill \\
+   + \frac{1}{2}{\left( {\sum\limits_{j = 1}^N {j{B_j}\frac{{\sinh jk{\eta _n}}}{{\cosh jkd}}\sin jk{X_n}} } \right)^2} + k{\eta _n} - {Rk}/ g 
+    = 0 \hfill \end{gathered}
+
+Going through all the :math:`N+1` points, Eqs. :eq:`cnoidalWavesGenerator12`
+and :eq:`cnoidalWavesGenerator13` provide :math:`2N+2` nonlinear equations for
+:math:`2N+5` unknown dimensionless variables: :math:`{k{\eta _n}}` for
+:math:`n = 1,2,{\text{ }} \ldots N+1`; :math:`B_j` for :math:`j = 1,2, \ldots
+N`; :math:`\bar U\sqrt {k/g}`; :math:`kd`; :math:`Q\sqrt {{k^3}/g}`; and :math:`{{Rk} /g}`. 
+Three more equations are available for closure
+of the problem. The first one is the equation for mean water depth :math:`d`
+using the trapezoidal rule of integration:
+
+.. math:: 
+   :label: cnoidalWavesGenerator14
+
+   \frac{1}{{2N}}\left( {k{\eta _1} + k{\eta _{N + 1}}} \right) + \frac{1}{N}\sum\limits_{n = 2}^N {k{\eta _n} - kd = 0}
+
+The second one is for the relation between wave height :math:`H` and water
+elevation,
+
+.. math:: 
+   :label: cnoidalWavesGenerator15
+
+   k{\eta _1} - k{\eta _{N + 1}} - kd\frac{H}{d} = 0
+ 
+If the wavelength |lambda| is known and period :math:`T` unknown, the last one
+is,
+
+.. math:: 
+   :label: cnoidalWavesGenerator16
+
+   kd - 2\pi \frac{d}{\lambda } = 0 \quad {\text{ (if }} \lambda {\text { is known)}}
+
+If the wave length |lambda| is unknown but :math:`T` is known, then equation
+:eq:`cnoidalWavesGenerator16` cannot be used. Instead the following equation
+obtained by combination of equations :eq:`cnoidalWavesGenerator01`,
+:eq:`cnoidalWavesGenerator02` and :eq:`cnoidalWavesGenerator05` is used as the
+last equation to close the problem,
+
+.. math:: 
+   :label: cnoidalWavesGenerator17
+
+   - \sqrt {kd} \bar U \sqrt {k/g} + kd \frac{{\bar u}}{{\sqrt {gd} }} - \frac{{2\pi }}{{T\sqrt {g/d} }} = 0 
+   \quad {\text{ (if }} T {\text{ is known)}}
+
+Note that equations :eq:`cnoidalWavesGenerator14` to
+:eq:`cnoidalWavesGenerator17` are not simplified any further because :math:`kd`
+and :math:`{k{\eta _n}}` are treated as unknown variables in the numerical
+solution.
+
+In summary, the known variables are :math:`H`, :math:`d`, :math:`\bar u`, and
+either |lambda| or :math:`T`. There are totally :math:`2N+5` unknown
+dimensionless variables and the same number of nonlinear equations, forming a
+closed problem. The :math:`2N+5` unknown variables are: :math:`{k{\eta _n}}`
+(for :math:`n = 1,2,{\text{ }} \ldots N+1`), :math:`B_j` (for j=1,2,...N),
+:math:`\bar U \sqrt {k/g}`, :math:`kd`, :math:`Q\sqrt {{k^3}/g}`, 
+and :math:`{{Rk} /g}`. If wave length is known, the :math:`2N+5`
+equations are :eq:`cnoidalWavesGenerator12` to :eq:`cnoidalWavesGenerator16`.
+If wave period is known instead, then the equations are
+:eq:`cnoidalWavesGenerator12` to :eq:`cnoidalWavesGenerator15` plus
+:eq:`cnoidalWavesGenerator17`.
+
+The nonlinear equation system is iteratively solved using Newton's method. Once
+the unknown variables are obtained, the transient water velocity in the
+stationary system (x, z) is calculated using the following equations, which are
+derived from Eqs. :eq:`cnoidalWavesGenerator03`, :eq:`cnoidalWavesGenerator04`,
+:eq:`cnoidalWavesGenerator07` and :eq:`cnoidalWavesGenerator11`,
+
+.. math:: 
+   :label: cnoidalWavesGenerator18
+
+   u(x,z,t) = \bar u + \sqrt {\frac{g}{k}} \sum\limits_{j = 1}^N {j{B_j}\frac{{\cosh jkz}}{{\cosh jkd}}\cos jk(x - ct)}
+
+|
+
+.. math:: 
+   :label: cnoidalWavesGenerator19
+
+   w(x,z,t) = \sqrt {\frac{g}{k}} \sum\limits_{j = 1}^N {j{B_j}\frac{{\sinh jkz}}{{\cosh jkd}}\sin jk(x - ct)}
+
+Water elevation :math:`\eta (x,t)` is calculated using the Fourier
+transformation,
+
+.. math:: 
+   :label: cnoidalWavesGenerator20
+
+   \eta (x,t) = \frac{{{E_1}}}{2} + \sum\limits_{j = 2}^{N + 1} {{E_j}\cos \,\left[ {(j - 1)k(x - ct)} \right]}
+
+where :math:`E_j` is calculated by numerical integration,
+
+.. math:: 
+   :label: cnoidalWavesGenerator21
+
+   E_j = \frac{2}{N} \sum\limits_{n = 1}^{N + 1} "\,\eta_n \cos \frac{(j-1)(n-1)\pi}{N} \quad {\text{ (for }} j=1,\,2,\,...,\,N+1 {\text{)}}
+
+:math:`\sum "` represents a trapezoidal-type summation with factors of
+:math:`\frac {1}{2}` multiplying the first and the last terms.
+
+.. index:: solitary wave generator
+
+.. index::
+   single: wave generator; solitary
+
+.. _SolitaryWavesGeneratorTh:
+
+Solitary Wave Generator
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _solitaryWaveGenerator:
+
+   .. image:: images/theory/solitary-wave-generator.*
+      :alt: Add alternative text
+   
+Solitary wave is a nonlinear non-oscillatory wave. It has a single crest and
+no trough and is completely above the undisturbed water level. A shoaling
+Cnoidal wave can be approximately treated as a solitary wave as the crests
+becomes sharper and shorter while the troughs are flatter and longer. A
+tsunami wave caused by an earthquake or a large-scale landslide is often
+described by a solitary wave. In |prod|, the solitary wave solution is based on
+McCowan's theory :cite:`McCowan-1891`. It has a higher order accuracy than
+Boussinesq's theory :cite:`Boussinesq-1871` and is recommended by Munk
+:cite:`Munk-1949` after detailed examinations.
+
+Similarly to other nonlinear waves in |prod|, it is assumed that the solitary
+wave exists in a flat bottom reservoir and propagates into the computational
+domain through the mesh boundary. The undisturbed water depth of the reservoir
+is a constant, :math:`d`. The wave height is :math:`H` (measured vertically
+from undisturbed water surface to crest). A reference system (\ :math:`x`,
+:math:`z`) is established with its origin fixed at the bottom, :math:`+x`
+going horizontally in the wave propagation direction and :math:`+z` directing
+vertically upward (when using the code, users can place the coordinate origin
+at any location but +z must be in the upward direction). A current may exist
+and its x-component of undisturbed velocity is a constant :math:`\bar u`.
+Equations for water elevation |eta|, x-velocity :math:`u`, z-velocity
+:math:`w`, and wave speed :math:`c` are :cite:`Munk-1949`
+
+.. math:: 
+   :label: solitaryWaveGenerator01
+
+   \frac{\eta }{d} = \frac{N}{M}\frac{{\sin \left[ {M\left( {1 + \frac{\eta }{d}} \right)} \right]}}{{\cos \left[ {M\left( {1 + \frac{\eta }{d}} \right)} \right] + \cosh \left( {M\frac{X}{d}} \right)}}
+
+|
+
+.. math:: 
+   :label: solitaryWaveGenerator02
+
+   \frac{{u\left( {x,z,t} \right) - \bar u}}{{{c_0}}} = N\frac{{1 + \cos \left( {\frac{{Mz}}{d}} \right)\cosh \left( {\frac{{MX}}{d}} \right)}}{{{{\left[ {\cos \left( {\frac{{Mz}}{d}} \right) + \cosh \left( {\frac{{MX}}{d}} \right)} \right]}^2}}}
+
+|
+
+.. math:: 
+   :label: solitaryWaveGenerator03
+
+   \frac{{w\left( {x,z,t} \right)}}{{{c_0}}} = N\frac{{\sin \left( {\frac{{Mz}}{d}} \right)\sinh \left( {\frac{{MX}}{d}} \right)}}{{{{\left[ {\cos \left( {\frac{{Mz}}{d}} \right) + \cosh \left( {\frac{{MX}}{d}} \right)} \right]}^2}}}
+
+
+|
+
+.. math:: 
+   :label: solitaryWaveGenerator04
+
+   c = \bar u + {c_0}
+
+where:
+
+* :math:`{c_0} = \sqrt {g\left( {d + H} \right)}` is wave speed in still water,
+* :math:`g` is the absolute value of gravitational acceleration, 
+* :math:`X = x - ct`,
+* :math:`t` is time,
+* :math:`M` and `N` satisfy 
+
+.. math:: 
+   :label: solitaryWaveGenerator05
+
+   \varepsilon = \frac{N}{M}{\text{tan}}\left[ {\frac{1}{2}M\left( {1 + \varepsilon } \right)} \right]
+
+|
+
+.. math:: 
+   :label: solitaryWaveGenerator06
+
+   N = \frac{2}{3}{\text{si}}{{\text{n}}^2}\left[ {M\left( {1 + \frac{2}{3}\varepsilon } \right)} \right]
+
+* :math:`\varepsilon = H/d`. 
+
+Equations :eq:`solitaryWaveGenerator01` to :eq:`solitaryWaveGenerator06` are
+nonlinear and are solved using Newton-Raphson method. The initial estimates of
+:math:`M` and :math:`N` are :math:`M = \sqrt {3\varepsilon }` and :math:`N =
+2\varepsilon`. The initial estimate of |eta| is from Boussinesq's solution for
+solitary wave :cite:`Boussinesq-1871`,
+
+.. math:: 
+   :label: solitaryWaveGenerator07
+
+   \frac{\eta }{d} = \varepsilon {\text{sec}}{{\text{h}}^2}\left( {\sqrt {\frac{{3\varepsilon }}{4}} \frac{X}{d}} \right) \qquad {\text {(initial estimate)}}
+
+.. index:: random wave generator
+
+.. index::
+   single: wave generator; random
+
+.. _RandomWavesGeneratorTh:
+
+Random Wave
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A Random wave is treated as a superposition of many linear component waves of
+different amplitudes, periods and initial phases. In |prod|, these component
+waves exist in a flat-bottom reservoir and propagate simultaneously into the
+computational domain through the mesh boundary. Their water elevations and
+velocities at the mesh boundary are summed up respectively to obtain the
+boundary condition for the random wave simulation. For example, water elevation
+of the random wave is expressed as
+
+.. math:: 
+   :label: randomWave01
+
+   \eta = \mathop \sum \limits_{j = 1}^N {a_j}\cos \left( {{k_j}x - {\omega _j}t + {\varphi _j}} \right)
+
+where:
+
+* :math:`N` is the total number of linear component waves;
+* :math:`t` is time;
+* :math:`x` is coordinate in the wave propagation direction;
+* :math:`a_j` is wave amplitude;
+* :math:`\omega _j` is angular frequency,
+* :math:`k_j` is wavelength,
+* :math:`\varphi _j` is initial phase, and
+* subscript :math:`j` represents the :math:`j`\ -th component wave.
+
+Wave energy spectrum :math:`E(\omega )` is used to calculate parameters of the
+component waves. Divide the range of the angular frequency |omega| equally into
+:math:`N` intervals, each of which represents a linear wave component. The 
+mid-point value of |omega| in the :math:`j`\ -th interval is used as :math:`\omega
+_j`. :math:`a_j` is calculated by
+
+.. math:: 
+   :label: randomWave02
+
+   {a_j} = \sqrt {2E\left( {{\omega _j}} \right)\Delta \omega } \qquad \left( {j = 1,2, \ldots N} \right)
+
+where :math:`\Delta \omega` is the :math:`\omega` interval. Since the component
+waves are linear, :math:`k_j` is a function of :math:`\varphi _j` and water
+depth and is calculated using the dispersion equation for linear wave.
+:math:`\varphi _j` is a real number randomly selected between 0 and 2\ |pi|.
+
+In |prod|, 1000 linear component waves are considered for a random wave
+simulation (i.e., N=1000). The range of |omega| is selected with its low and
+high limits corresponding to 50s and 0.5s wave periods, respectively. 
+Pierson-Moskowitz (P-M) spectrum :cite:`Pierson-Moskowitz-1964` and JONSWAP spectrum
+:cite:`Hasselmann-et-al-1973` are built into the solution. Users can select either
+of them or define their own wave energy spectrum using an external data file.
+ 
+1. Pierson-Moskowitz (P-M) spectrum
+
+   The P-M spectrum :cite:`Pierson-Moskowitz-1964` is for fully developed sea (wave energy is balanced
+   between increase from wind and loss to turbulence). It requires that the
+   fetch length, which is the length of the sea surface where wind blows, is
+   sufficiently large and the wind duration is sufficiently long. The only
+   parameter in the P-M spectrum is the wind speed. The P-M spectrum is
+
+   .. math:: 
+      :label: randomWave03
+
+      E\left( \omega  \right) = \frac{{\alpha {g^2}}}{{{\omega ^5}}}exp\left[ { - \frac{5}{4}{{\left( {\frac{{{\omega _p}}}{\omega }} \right)}^4}} \right]
+
+   where:
+
+   * :math:`{\omega _p} = \frac{{0.855g}}{{{U_{10}}}}` is the angular frequency at the spectrum peak;
+   * :math:`U_{10}` is the wind speed 10m above the mean sea level;
+   * :math:`g` is the gravitational acceleration;
+   * :math:`\alpha = 0.0081` is a scaling parameter. 
+ 
+#. JONSWAP spectrum
+
+   The JONSWAP spectrum is for fetch-limited sea. It was developed by the Joint
+   North Sea Wave Project :cite:`Hasselmann-et-al-1973`. Its expression is
+
+   .. math:: 
+      :label: randomWave04
+
+      E\left( \omega \right) = \frac{{\alpha {g^2}}}{{{\omega ^5}}}\exp\left[ { - \frac{5}{4}{{\left( {\frac{{{\omega _p}}}{\omega }} \right)}^4}} \right]{\gamma ^{\exp\left[ { - \frac{{{{\left( {\omega - {\omega _P}} \right)}^2}}}{{2{\sigma ^2}\omega _P^2}}} \right]}}
+
+   where:
+
+   * :math:`{\omega _p} = 22{\left[ {\frac{{{g^2}}}{{{U_{10}}F}}} \right]^{1/3}}`;
+   * :math:`F` is the fetch length;
+   * :math:`\alpha = 0.076{\left[ {\frac{{U_{10}^2}}{{Fg}}} \right]^{0.22}}`;
+   * |gamma| is the peak enhancement factor,
+   * :math:`1 \leq \gamma \leq 7`, and typically
+   * :math:`\gamma = 3.3`;
+   * :math:`\sigma = 0.07` for :math:`\omega \leq \omega _p`, and
+   * :math:`\sigma = 0.09` for :math:`\omega \geq \omega _p`. 
+
+.. index:: rating curve and natural inlet
+
+.. index::
+   single: rating curve; natural inlet boundary
+
+.. _RatingCurveNaturalInlet:
+
+Rating Curve and Natural Inlet Boundary
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Rating curve is the relation between fluid elevation and water volume flow rate at a cross section of a river. 
+A user-provided rating curve can be applied to a volume flow rate boundary or a pressure boundary to specify 
+water elevation corresponding to the provided or calculated volume flow rate. For example, in a flood wave 
+simulation, a rating curve can be used to determine the upstream water elevation based on the time-dependent 
+water discharge. The figures below shows an example of volume flow rate vs time (left figure) and rating curve (right figure). 
+
+.. _ratingCurveSample:
+
+.. figure:: images/theory/Rating_curve.*
+   :align: center
+   :width: 6 in
+   :alt: Computational cell showing locations of components of strain rate tensor
+
+   An example of volume flow rate vs time (left figure) and rating curve (right figure)
+
+If at an inlet boundary the volume flow rate (either constant or time-dependent) is given but the rating curve is 
+unknown, then a natural inlet algorithm can be employed to evaluate water elevation, and such a boundary is a natural 
+inlet boundary. In such a case, water depth in each boundary cell is set the same as that in the immediate downstream 
+interior cell. This is to make sure there is no significant jump of water elevation near the inlet boundary. The flow 
+categories at the boundary can be chosen as subcritical flow, supercritical flow, critical flow or unknown.  
+
+.. seealso::  
+   * :ref:`rating_curves` section in the :doc:`model-reference` chapter.
+   * :ref:`natural_inlets` section in the :doc:`model-reference` chapter.
+
+
+.. ###############################################
+.. import shared documentation
+.. include:: ../shared/theory/approximations/stability-considerations.rst
+.. include:: ../shared/theory/approximations/particles.rst
+.. ###############################################
+
+.. index:: rigid body dynamics, non-inertial reference frame model
+
+.. index::
+   single: models; non-inertial reference frame
+
+.. _RigidBodyDynamicsAlgorithmTh:
+
+Rigid Body Dynamics Algorithm for Non-Inertial Reference Frame Model
+=======================================================================
+
+As previously mentioned in :ref:`Rigid Body Dynamics
+<RigidBodyDynamicsNIRFTh>`, the non-inertial reference frame method is
+for analysis of flow in a moving container. Computational mesh is fixed with
+the container in a non-inertial reference frame while fictitious forces are
+applied on fluid to account the non-inertial effects. If motion of the
+container is not prescribed but dynamically coupled with the flow inside the
+container, a rigid body dynamics algorithm is employed to solve the container
+motion to obtain the fictitious force. Coupling between the body motion and
+fluid dynamics can be either explicit or implicit, as described below.
+
+The model described in Rigid Body Dynamics involves a high degree of mutual
+coupling. Therefore, a general solution should consider the equations for all
+parts of the problem simultaneously. Such a solution, however, is very difficult
+to implement, particularly without specification of the details of the
+environmental and control forces and torques. Here, we shall outline a
+sequential, explicitly coupled solution, which, while not universally valid, is
+widely applicable and efficient within its range of validity. This explicit
+algorithm has been generalized to permit an iterative implicit coupling, which
+extends the solution to some additional situations.
+
+We choose to decompose the solution into the following six steps:
+
+1. :ref:`RBD_step1`
+#. :ref:`RBD_step2`
+#. :ref:`RBD_step3`
+#. :ref:`RBD_step4`
+#. :ref:`RBD_step5`
+#. :ref:`RBD_step6`
+
+These six steps are combined into a cyclic algorithm that advances the total
+solution through time. Each step uses previous results from the others,
+forming an explicit algorithm. The iterative implicit solution adds a seventh
+step, :ref:`ConvergenceTestingTh`, and repeats the basic six steps until convergence is
+achieved.
+
+.. _RBD_step1:
+
+Evaluation of Environmental Forces and Torques
+--------------------------------------------------------------------------
+
+This step is clearly very problem-dependent. The results of this step are three
+net force components and three net torque components. These components are in
+the body-fixed Cartesian coordinate system. Typically, these may represent
+forces arising from aerodynamic drag, solar wind and/or geomagnetic effects.
+This routine can also incorporate the torque due to gravitational gradients or
+the fictitious forces and torques that compensate for an earth-fixed reference
+frame. Three components of gravitational acceleration (in the inertial
+coordinate system) are also evaluated by :program:`rbenvr` and stored. These
+values are calculated at the location of the rigid-body center of mass and do
+not account for variations of gravity through the body.
+
+The location of the rigid-body center of mass (in inertial coordinates) and the
+rigid-body attitude are available for the evaluation of these forces and
+torques. For some purposes the gravitating body coordinates may be simpler to
+use. Vector quantities can readily be transformed between inertial and 
+body-fixed coordinates by use of the transformation matrix and its inverse.
+Additional input that may be required to evaluate control functions can be
+specified through the |prod| user data namelist :envvar:`USRDAT` or the "dummy"
+variables in namelist :envvar:`XPUT`.
+
+.. _RBD_step2:
+
+Evaluation of Control Forces and Torques
+--------------------------------------------------------------------------
+
+This step is directly analogous to Step 1. The two are separated to simplify the
+combination of models for various phenomena. The control forces and torques are
+transferred through body-fixed components, which are stored in variables
+separate from the environmental force and torque components. To provide an
+elementary control capability, we have developed a skeleton version which treats
+a few special cases.
+
+.. _RBD_step3:
+
+Solution of the Fluid Dynamics Equations
+--------------------------------------------------------------------------
+
+Decomposition of the analysis as described is motivated by the desire to retain
+the fluid analysis capabilities of |prod| intact. Only peripheral changes to the
+usual solution algorithm are needed by this approach.
+
+It is important to note that we are choosing to consider the fluid as a separate
+entity in our solution algorithm. Thus, when we consider the rigid body, we are
+specifically excluding any onboard liquids. The fluid part of the analysis is
+handled explicitly in Step 3.
+
+All usual |prod| models and solution methods are available for the solution of
+the fluid component of the simulation. The continuity, volume-of-fluid and
+momentum equations are solved to determine the location and velocity of the
+fluid within the body-fixed reference frame.
+
+The influence of the gravitating body must be added through transient evaluation
+of the local gravitational field since the apparent direction of this force will
+vary as the rigid body rotates, and its strength may vary as the center of mass
+moves. This acceleration must be incorporated in the fluid equations directly
+since it influences both the fluid and the rigid body. We have simplified this
+calculation by using the gravitational vector at the rigid-body center of mass
+throughout the fluid. Thus we can account for neither displacement of the fluid
+from the rigid-body mass centroid nor the variation of gravity within the fluid
+region. The gravitating body force is accounted for by modifying the components
+of linear acceleration used by the fluid-flow solution calculated by the 
+rigid-body center of mass motion algorithm in Step 4. This is accomplished in
+subroutine :program:`motion`. The constant gravity components :envvar:`GX`, :envvar:`GY` and
+:envvar:`GZ` are not used by this model and generally should not be combined with
+the coupled rigid-body dynamics model.
+
+The net force and torque exerted on the rigid body by the fluid are calculated
+in subroutine :program:`feval`. The components of these vectors are resolved in the
+body-fixed Cartesian coordinate system (even if the fluid calculation uses
+cylindrical coordinates). The torque is converted to that about the rigid-body
+center of mass for use in Step 5. Force moments for other purposes are evaluated
+about the origin of the body-fixed coordinates and are still available in the
+:file:`flsgrf` data file.
+
+Since the fluid-dynamic calculation occurs before the rigid-body dynamics, we
+must deal with an initialization difficulty. The flow analysis requires
+knowledge of the rotation and acceleration of the rigid body. To resolve this
+difficulty, we temporarily assume (for the first cycle only) either that the
+fluid mass acts as if frozen in position or that the body acceleration can be
+calculated by ignoring the fluid. This permits evaluation of approximate values
+of the rigid-body acceleration and rotation for the purpose of solving the flow
+equations during the first cycle.
+
+.. _RBD_step4:
+
+Solution of the Dynamic Equations for the Rigid-Body Center of Mass
+--------------------------------------------------------------------------
+
+Standard analysis shows that the equations for the motion of any rigid body can
+be separated into an equation for the motion of the center of mass of the body
+and independent dynamic equations for the rotation of the body about the mass
+center :cite:`Batchelor-1983`, :cite:`Goldstein-1950`, :cite:`Wertz-1978`. In our
+algorithm we identify the rigid body as excluding the fluid mass for the
+specific purpose of allowing this separation. Therefore, Step 4 solves the
+linear momentum equation:
+
+.. math::
+   :label: linearMomentumEquationRigidBody
+
+   M\frac{{d{{{\mathbf{V'}}}_{\rm{CM}}}}}{{dt}} = {{\mathbf{F'}}_e} + {{\mathbf{F'}}_c} + {{\mathbf{F'}}_g} + \sum {{\mathbf{F'}}_f}
+
+where:
+
+* :math:`{\mathbf{V'}}_{\rm{CM}}` is the velocity of the center of mass of the dry rigid body. This velocity is relative to the inertial reference frame and is resolved in the (:math:`x'`, :math:`y'`, :math:`z'`) coordinates.
+* :math:`M` is the total dry mass of the rigid body,
+* :math:`{{\mathbf{F'}}_e}`, :math:`{{\mathbf{F'}}_c}`, :math:`{{\mathbf{F'}}_f}` are the environmental, control and fluid forces that are evaluated in Steps 1-3, respectively, and
+* :math:`{{\mathbf{F'}}_g}` is the force due to the gravitating body.
+
+Note that the environmental, control and fluid force vectors are resolved in the
+inertial reference frame in this equation. This requires application of the
+attitude transformation (see Step 6) to the components stored in common since
+those components are in the body-fixed reference frame. The gravitational force
+is, of course, already evaluated in the inertial reference frame.
+
+For the explicit coupling algorithm, we use a simple first-order forward
+difference technique to integrate the momentum equation. The technique is
+explicit in that the most recently calculated values of the forces are used at
+each cycle. The difference technique is motivated by the difficulty of
+calculating the fluid force, which normally involves many nonlinear equations.
+This makes the use of more accurate integration techniques of questionable
+value.
+
+The implicit algorithm uses a "frozen fluid" approximation to estimate the
+acceleration to be used for the next iteration. This approximation adds the
+"frozen fluid" mass (which is taken to equal the total liquid mass) times the
+acceleration vector to both sides of the momentum equation. The term on the
+left-hand side is treated implicitly (that is with the new estimate of the
+acceleration), while the right-hand side is treated explicitly. This removes the
+limitation on fluid/rigid mass ratio, since the resulting equation uses the
+total (fluid + rigid) mass in calculating the new estimate of acceleration. Once
+converged, the original equation is almost satisfied, since the old and new
+accelerations are nearly equal.
+
+The center-of-mass velocity is used to integrate directly for the position of
+the rigid-body center of mass relative to the inertial reference frame
+coordinates (:math:`x'`, :math:`y'`, :math:`z'`). This position is then
+converted to spherical coordinates. Finally, the influence of the gravitating
+body rotation is accounted for in calculating longitude and latitude relative
+to the gravitating body.
+
+.. _RBD_step5:
+
+Solution of the Dynamic Equations for the Rotation of the Rigid Body
+--------------------------------------------------------------------------
+
+The separation of translational and rotational momentum used in Step 4 to
+evaluate the position of the rigid-body center of mass results in the angular
+momentum conservation equation:
+
+.. math::
+   :label: angularMomentumConservationEquationRigidBody
+
+   \left[ J \right] \cdot \frac{{d\omega }}{{dt}} = {{\mathbf{T}}_e} + {{\mathbf{T}}_c} - \omega \times \left[ J \right] \cdot \omega + \sum {{\mathbf{T}}_f}
+
+where:
+
+* :math:`J` is the dry-rigid-body inertial matrix,
+* :math:`\omega` is the angular velocity and
+* :math:`{{\mathbf{T}}_e}`, :math:`{{\mathbf{T}}_c}` and :math:`{{\mathbf{T}}_f}` are the torques due to environment, control and fluid forces, respectively.
+
+Note that this equation is written in the body-fixed reference frame although
+the angular velocity is that with respect to the inertial reference frame. This
+accounts for the "additional" cross product term, which is absent if the
+equation is written in the inertial frame. The inertia matrix and torques are
+also resolved along the body-fixed (:math:`x`, :math:`y`, :math:`z`) coordinate system.
+
+Equation :eq:`angularMomentumConservationEquationRigidBody` is solved in a
+manner analogous to the linear momentum equation in Step 4. Thus, we use an
+explicit, forward-time formulation or a "frozen fluid" approximation, depending
+on the time algorithm selected. The results of this step are the components of
+the angular velocity and angular acceleration of the dry rigid body in the 
+body-fixed reference frame. These components are available for Steps 1-3 of the next
+cycle.
+
+.. _RBD_step6:
+
+Integration of the Kinematic Equations for the Rigid-Body Attitude
+--------------------------------------------------------------------------
+
+There are several popular representations of the attitude of a rigid body
+:cite:`Goldstein-1950`. We choose to describe the attitude by the full
+transformation matrix. The matrix :math:`\left[ A \right]` is defined to
+transform an arbitrary vector :math:`\mathbf{G}'` from inertial coordinates to body-fixed
+coordinates through the equation
+
+.. math::
+   :label: integrationKinematicEqForRigidBodyAttitude1
+
+   \mathbf{G}' = \left[ A \right] \cdot \mathbf{G}
+
+As shown in reference :cite:`Goldstein-1950`, the components of :math:`\left[ A
+\right]` are then the direction cosines between the axes of the two systems
+
+.. math::
+   :label: integrationKinematicEqForRigidBodyAttitude2
+
+   {A_{ij}} = {x_i} \cdot {x'_j}
+
+where we have switched to subscripted unit vectors to simplify the notation. As
+usual, :math:`x_1` is equal to :math:`x`, :math:`x_2` is equal to :math:`y`,
+etc.
+
+By definition, this matrix must be orthogonal, and therefore its inverse is
+equal to its transpose, and we have the relationship
+
+.. math::
+   :label: integrationKinematicEqForRigidBodyAttitude3
+
+   \mathbf{G}' = \left[ {{A^T}} \right] \cdot \mathbf{G}
+
+The kinematic equation relating the transformation matrix :math:`\left[ A
+\right]` to the rigid-body velocity is
+
+.. math::
+   :label: integrationKinematicEqForRigidBodyAttitude4
+
+   \frac{{d\left[ A \right]}}{{dt}} = \left[ {\Omega '} \right] \cdot \left[ A \right]
+
+where
+
+.. math::
+   :label: integrationKinematicEqForRigidBodyAttitude5
+
+   \left[ {\Omega '} \right] = 
+    \begin{bmatrix}
+   {0} & {\omega _z} & {- {\omega _y}} \\
+   { - {\omega _z}} & {0} & {{\omega _x}} \\
+   {{\omega _y}} & { - {\omega _x}} & {0}
+   \end{bmatrix}
+
+
+Step 6 of our algorithm implements a first-order, forward-time difference
+approximation to determine the variation of the transformation matrix
+:math:`\left[ A \right]` with time.
+
+One potential problem with this approach is the accumulation of errors in the
+matrix elements. The most serious difficulty associated with these errors is the
+potential for generating non-orthogonal matrices. To ensure that this does not
+occur, we orthogonalize the matrix at the completion of every cycle using a
+simple Gram-Schmidt orthonormalization procedure on the implied inertial
+coordinates. That is, we define the approximate inertial unit vectors as the
+column vectors of the transformation matrix :math:`\left[ A \right]`. These
+vectors are orthonormalized in the usual way, and the transformation matrix
+columns are replaced with the modified unit vectors. This ensures that
+:math:`\left[ A \right]` represents a physical rotation transformation at all
+times. Therefore, the errors are limited to incorrect rotation angles.
+Accumulated error magnitudes are evaluated as part of the orthonormalization
+procedure.
+
+The result of Step 6 is the current value of the transformation matrix. The
+matrix can be used directly to transform between the inertial and body-fixed
+reference frames as necessary in Steps 1-5.
+
+.. index:: convergence testing
+
+.. _ConvergenceTestingTh:
+
+Convergence Testing
+--------------------------------------------------------------------------
+
+This algorithm is for the explicit coupling method. The implicit method,
+however, requires a final step, which is the testing of the current
+accelerations and forces for convergence. Actually, the convergence test is made
+only on the acceleration components, and we assume that the force and torque
+components must also be converged. The user can supply a convergence criterion
+(:envvar:`ACCEPS`). The change in each acceleration component between iterations must be
+less than this parameter times an appropriate normalization velocity for
+convergence to be achieved. The user may also specify a maximum number of
+iterations. If convergence is not achieved within this limit, the calculation is
+aborted and an error message generated.
+
+
+.. ###############################################
+.. import shared documentation
+.. include:: ../shared/theory/approximations/simple-shrinkage.rst
+.. ###############################################
+
+.. index:: reactive flows algorithm
+
+.. _ReactiveFlowsAlgorithmTh:
+
+Reactive Flows Algorithm
+===========================
+
+The reactive flow model is designed to operate at the control volume level, i.e.,
+it is used to determine new species concentrations within each computational cell at 
+the end of a time cycle, at :math:`t=t_{n+1}`.
+
+The convection and diffusion of an arbitrary number of chemical reactants :math:`M \leq 99` is
+handled by species concentration transport equations. In addition, some species may
+be defined as non-transportable, e.g., chemical species attached to rigid surfaces.
+
+A general reactive equation for a species :math:`C_i`, :math:`i=1,M`, is
+
+    .. math::
+       :label: genericReactiveEquation
+
+       R_i = \frac {\partial C_i} {\partial t} = \sum_{j=1,N} {G_j (C_1, C_2,...,C_M)}
+
+where :math:`N` is the number of reactions :math:`G_j` affecting species :math:`C_i`. 
+Currently, each reaction is approximated as a product of powers of the species concentrations
+
+    .. math::
+       :label: powerReactiveEquation
+
+       G_j (C_1, C_2,...,C_M) = k_j C_1^{n_{1_,j}}C_2^{n_{2,j}}...C_M^{n_{M,j}}
+
+where :math:`k_j` and :math:`n_{m,j}` are constants.
+
+The numerical approximations use a simple, first-order time integration algorithm in which species
+evolution rates :math:`R_i` are evaluated implicitly in 
+each control volume, with explicit coupling between adjacent control volumes. A linear system of 
+equations is contructed for :math:`R_i(t_{n+1})` in a control volume by, first, using the Taylor 
+expansion of :math:`G_j` with respect to time and retaining only linear terms:
+
+    .. math::
+       :label: taylorExpansionEquation
+
+       G_j (C_1, C_2,...,C_M)|_{t=t_{n+1}} \approx G_j (C_1, C_2,...,C_M)|_{t=t_n} + \left( \sum_{m=1,M} {\frac{\partial G_j}{\partial C_m} \frac{\partial C_m}{\partial t}} \right) \Delta t
+
+where :math:`\Delta t = t_{n+1} - t_n`.
+
+Now, substituting Eq. :eq:`taylorExpansionEquation` into Eq. :eq:`genericReactiveEquation` and taking reaction 
+rates and linear expansion coefficients at :math:`t=t_{n+1}` yields
+
+    .. math::
+       :label: implicitReactiveEquation
+
+       R_i(t_{n+1}) = \sum_{j=1,N} {G_j (C_1, C_2,...,C_M)}|_{t=t_n} + \left( \sum_{j=1,N} {\sum_{m=1,M} {\frac{\partial G_j}{\partial C_m}|_{t=t_{n+1}} R_m(t_{n+1})}} \right) \Delta t
+
+
+Equations :eq:`implicitReactiveEquation` constitute a non-linear system since the coefficients for :math:`R_i(t_{n+1})`
+resulting from the Taylor expansions are also evaluated implicitly, and requires an iterative procedure to solve outlined below.
+
+First, the coefficients :math:`\frac{\partial G_j}{\partial C_m}` are computed at the current, known values 
+of species concentrations :math:`C_i` using Eq. :eq:`powerReactiveEquation`, and the resulting *linear* equations for :math:`R_i` are solved directly 
+using a Gaussian elimination procedure. Then the Taylor expansion coefficients Eq. :eq:`taylorExpansionEquation` 
+are recalculated using species concentrations updated from the new reaction rates:
+
+    .. math::
+       :label: updatedConcentrationsEquation
+
+       C_i = C_i(t_n) + R_i \Delta t
+
+The complete solution procedure looks as follows:
+
+1. Calculate the coefficients in the linear Taylor expansion of the terms on the right-hand side of 
+   Eq. :eq:`taylorExpansionEquation` for each :math:`i=1,M` and :math:`j=1,N` using the current values of 
+   species concentrations and Eq. :eq:`powerReactiveEquation`.
+
+#. Solve for :math:`R_i` using Gaussian elimination of Eq. :eq:`implicitReactiveEquation`
+
+#. Update species concentrations using the values of :math:`R_i` obtained in step #2, Eq. :eq:`updatedConcentrationsEquation`
+
+#. Return to step #1 until convergence is reached.
+
+Solution is deemed converged for the current control volume when the sum of the squares of the resudials of 
+all :math:`M` equations is less then 1.e-06 of the sum of the squares of the :math:`M` species concentrations in the cell. 
+
+The procedure is repeated for all cells that contain fluid.
+
