@@ -15,10 +15,10 @@ from .utils.multiprocessing import SimulationUtilsMultiprocessing
 from .view import SimulationView
 from .visualizations import SimulationVisualizations
 
+
 class Simulation(
     SimulationBase,
     SimulationParameters,
-
     SimulationHuggingFace,
     SimulationMeasurements,
     SimulationName,
@@ -50,7 +50,7 @@ class Simulation(
         @param filename: Used for Flow 3D files such as `prepin.simulation`.
         @param use_adaptive_domain: Limits domain based on expected melt pool.
         @param use_template: Uses template for generating `prepin` file.
-        @param verbose: For debugging. 
+        @param verbose: For debugging.
 
         @param power: Laser Power (W)
         @param velocity: Scan Velocity (m/s)
@@ -73,12 +73,12 @@ class Simulation(
         @param fluid_region_z_end: Fluid top boundary (default 400 µm)
         """
         super().__init__(
-            version = version,
-            name = name,
-            filename = filename,
-            use_adaptive_domain = use_adaptive_domain,
-            use_template = use_template,
-            verbose = verbose,
+            version=version,
+            name=name,
+            filename=filename,
+            use_adaptive_domain=use_adaptive_domain,
+            use_template=use_template,
+            verbose=verbose,
             **kwargs,
         )
 

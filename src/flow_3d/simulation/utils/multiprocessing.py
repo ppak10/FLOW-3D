@@ -1,7 +1,8 @@
 import logging
 import traceback
 
-class SimulationUtilsMultiprocessing():
+
+class SimulationUtilsMultiprocessing:
     """
     Multiprocessing methods used within simulation class.
     """

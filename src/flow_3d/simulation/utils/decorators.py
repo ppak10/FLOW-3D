@@ -1,8 +1,9 @@
 import functools
 import os
 
-#TODO: Rename to singular `SimulationUtilsDecorator` instead of plural
-class SimulationUtilsDecorators():
+
+# TODO: Rename to singular `SimulationUtilsDecorator` instead of plural
+class SimulationUtilsDecorators:
     """
     Decorators used within simulation class.
     """
@@ -28,7 +29,7 @@ class SimulationUtilsDecorators():
             previous_dir = os.getcwd()
             os.chdir(working_dir)
 
-            # Run method 
+            # Run method
             output = func(self, *args, **kwargs)
 
             # Change working directory back to previous folder

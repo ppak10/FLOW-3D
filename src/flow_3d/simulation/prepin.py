@@ -20,7 +20,8 @@ TEMPLATE_IDS = [
 DEFAULT_TEMPLATE_ID = "S31603"
 DEFAULT_TEMPLATE_ID_TYPE = "UNS"
 
-class SimulationPrepin():
+
+class SimulationPrepin:
     """
     Base class for creating prepin files given process parameters.
     """
@@ -33,6 +34,7 @@ class SimulationPrepin():
 
         @param func: Method where process parameters have changed within class.
         """
+
         def wrapper(self, *args, **kwargs):
             result = func(self, *args, **kwargs)
 
@@ -46,25 +48,33 @@ class SimulationPrepin():
 
     def __init__(
         self,
-        template_id = DEFAULT_TEMPLATE_ID,
-        template_id_type = DEFAULT_TEMPLATE_ID_TYPE,
-        use_template = True,    # Placeholder for future functionality.
+        template_id=DEFAULT_TEMPLATE_ID,
+        template_id_type=DEFAULT_TEMPLATE_ID_TYPE,
+        use_template=True,  # Placeholder for future functionality.
         **kwargs,
     ):
         # Check template id
         if template_id not in TEMPLATE_IDS:
-            raise Exception(textwrap.dedent(f"""
+            raise Exception(
+                textwrap.dedent(
+                    f"""
                 '{template_id}'is not a valid `template_id`.
                 Please select one of `{TEMPLATE_IDS}`.
-                """))
+                """
+                )
+            )
         self.template_id = template_id
 
         # Check template id type
         if template_id_type not in TEMPLATE_ID_TYPES:
-            raise Exception(textwrap.dedent(f"""
+            raise Exception(
+                textwrap.dedent(
+                    f"""
                 '{template_id_type}'is not a valid `template_id_type`.
                 Please select one of `{TEMPLATE_ID_TYPES}`.
-                """))
+                """
+                )
+            )
 
         self.template_id_type = template_id_type
         self.use_template = use_template
@@ -81,7 +91,9 @@ class SimulationPrepin():
 
         if self.template_id_type in ["UNS"]:
             # Use the 'material' template folder
-            template_file_path = os.path.join("simulation", "prepin", "material", template_filename)
+            template_file_path = os.path.join(
+                "simulation", "prepin", "material", template_filename
+            )
             template_resource = files(data).joinpath(template_file_path)
         else:
             warnings.warn(f"Not yet supported")
@@ -98,6 +110,5 @@ class SimulationPrepin():
                 print(f"Replacing <{key.upper()}> with {str(self.cgs(key))}")
 
             t = t.replace(f"<{key.upper()}>", str(self.cgs(key)))
-        
-        return t 
 
+        return t

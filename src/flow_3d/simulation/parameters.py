@@ -5,9 +5,10 @@ from decimal import Decimal
 
 from flow_3d.simulation.utils.decorators import SimulationUtilsDecorators
 
+
 # TODO: Create a folder specific to `settings` # (or some better word) and move
 # there.
-class SimulationParameters():
+class SimulationParameters:
     """
     Class for defining simulation parameters.
     """
@@ -19,49 +20,43 @@ class SimulationParameters():
             # "adaptive_domain_padding_x": 5E-5,  # 50 µm
             # "adaptive_domain_padding_y": 5E-5,  # 50 µm
             # "adaptive_domain_padding_z": 5E-5,  # 50 µm
-
             # Global
-            "simulation_finish_time": 0.001,    # 0.001 Seconds
-
+            "simulation_finish_time": 0.001,  # 0.001 Seconds
             # Process
-            "power": 100,                       # 100 Watts
-            "velocity": 1.0,                    # 1 m/s
-            "temperature_initial": 299.15,      # 299.15 Kelvin
-            "evaporation": 0,                   # 0 for Antoine, 1 for integral
-            "lens_radius": 5E-5,                # 50 µm
-            "spot_radius": 5E-5,                # 50 µm
-
+            "power": 100,  # 100 Watts
+            "velocity": 1.0,  # 1 m/s
+            "temperature_initial": 299.15,  # 299.15 Kelvin
+            "evaporation": 0,  # 0 for Antoine, 1 for integral
+            "lens_radius": 5e-5,  # 50 µm
+            "spot_radius": 5e-5,  # 50 µm
             # Mesh
-            "mesh_size": 2E-5,                  # 20 µm
+            "mesh_size": 2e-5,  # 20 µm
             # "mesh_x_start": 5E-4,               # 500 µm
-            "mesh_x_start": 0,                  # 0 µm
-            "mesh_x_end": 3E-3,                 # 3000 µm
-            "mesh_y_start": 0,                  # 0 µm
+            "mesh_x_start": 0,  # 0 µm
+            "mesh_x_end": 3e-3,  # 3000 µm
+            "mesh_y_start": 0,  # 0 µm
             # "mesh_y_end": 6E-4,                 # 600 µm
-            "mesh_y_end": 1E-3,                 # 1000 µm
-            "mesh_z_start": 0,                  # 0 µm
-            "mesh_z_end": 6E-4,                 # 600 µm
-
+            "mesh_y_end": 1e-3,  # 1000 µm
+            "mesh_z_start": 0,  # 0 µm
+            "mesh_z_end": 6e-4,  # 600 µm
             # Fluid Region
-            "fluid_region_x_start": 0,          # 0 µm
+            "fluid_region_x_start": 0,  # 0 µm
             # "fluid_region_x_end": 2.8E-3,       # 2800 µm
-            "fluid_region_x_end": 3E-3,         # 3000 µm
-            "fluid_region_y_start": 0,          # 0 µm
+            "fluid_region_x_end": 3e-3,  # 3000 µm
+            "fluid_region_y_start": 0,  # 0 µm
             # "fluid_region_y_end": 6E-4,         # 600 µm
-            "fluid_region_y_end": 1E-3,         # 1000 µm
-            "fluid_region_z_start": 0,          # 0 µm
-            "fluid_region_z_end": 4E-4,         # 400 µm
-
+            "fluid_region_y_end": 1e-3,  # 1000 µm
+            "fluid_region_z_start": 0,  # 0 µm
+            "fluid_region_z_end": 4e-4,  # 400 µm
             # Weld
             # "beam_x": 6E-4,                     # 600 µm (0.06 cm)
-            "beam_x": 3E-4,                     # 300 µm (0.03 cm)
+            "beam_x": 3e-4,  # 300 µm (0.03 cm)
             # "beam_y": 3E-4,                     # 300 µm (0.03 cm)
-            "beam_y": 5E-4,                     # 500 µm (0.05 cm)
-            "beam_z": 0.01,                     # 10,000 µm (1.00 cm)
-            "beam_diameter": 1E-4,              # 100 µm (not explicity in prepin file)
-
+            "beam_y": 5e-4,  # 500 µm (0.05 cm)
+            "beam_z": 0.01,  # 10,000 µm (1.00 cm)
+            "beam_diameter": 1e-4,  # 100 µm (not explicity in prepin file)
             # Other
-            "gauss_beam": 5E-5 / math.sqrt(2),  # 50 / √2 µm 
+            "gauss_beam": 5e-5 / math.sqrt(2),  # 50 / √2 µm
         }
 
         # Sets default parameters
@@ -101,20 +96,25 @@ class SimulationParameters():
                     apply_config(value, prefix=attr_name)
                 else:
                     old_value = getattr(self, attr_name, "(not set)")
-                    old_type = type(old_value).__name__ if old_value != "(not set)" else "N/A"
+                    old_type = (
+                        type(old_value).__name__ if old_value != "(not set)" else "N/A"
+                    )
                     new_type = type(value).__name__
 
-                    if self.verbose: 
-                        print(f"Before: self.{attr_name} = {old_value} (type: {old_type})")
+                    if self.verbose:
+                        print(
+                            f"Before: self.{attr_name} = {old_value} (type: {old_type})"
+                        )
                     setattr(self, attr_name, value)
-                    if self.verbose: 
-                        print(f"After : self.{attr_name} = {getattr(self, attr_name)} (type: {new_type})")
+                    if self.verbose:
+                        print(
+                            f"After : self.{attr_name} = {getattr(self, attr_name)} (type: {new_type})"
+                        )
 
         with open(config_file, "r") as f:
             config = yaml.safe_load(f)
             apply_config(config)
             self.prepin_file_content = self.build_from_template()
-
 
     def cgs(self, parameter: str):
         """
@@ -123,7 +123,7 @@ class SimulationParameters():
         if parameter == "power":
             # 1 erg = 1 cm^2 * g * s^-2
             # 1 J = 10^7 ergs -> 1 W = 10^7 ergs/s
-            return getattr(self, parameter) * 1E7
+            return getattr(self, parameter) * 1e7
         elif parameter == "velocity":
             # Handled separately from `else` case just in case if mm/s input
             # is implement in the future.
@@ -131,17 +131,21 @@ class SimulationParameters():
             return getattr(self, parameter) * 100
         elif parameter == "gauss_beam":
             # Gauss beam should utilize a more precise value.
-            return getattr(self, parameter) * 1E2
+            return getattr(self, parameter) * 1e2
         elif parameter == "mesh_size":
             # Issues at 5 µm (0.0005) rounding to 10 µm (0.0010)
-            parameter_decimal = Decimal(getattr(self, parameter) * 1E2)
+            parameter_decimal = Decimal(getattr(self, parameter) * 1e2)
             return float(round(parameter_decimal, 4))
-        elif parameter in ["simulation_finish_time", "evaporation", "temperature_initial"]:
+        elif parameter in [
+            "simulation_finish_time",
+            "evaporation",
+            "temperature_initial",
+        ]:
             # Keep units and datatype the same
             return getattr(self, parameter)
         else:
             # Converting to decimal handles case where 2.799 != 2.8
-            parameter_decimal = Decimal(getattr(self, parameter) * 1E2)
+            parameter_decimal = Decimal(getattr(self, parameter) * 1e2)
             return float(round(parameter_decimal, 3))
 
     # TODO: Figure whether or not to implement, in practice it seems unlikely
@@ -186,4 +190,3 @@ class SimulationParameters():
     #             # converts everything else to float.
     #             else:
     #                 setattr(self, key, float(value))
-

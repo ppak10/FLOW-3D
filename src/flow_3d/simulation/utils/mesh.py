@@ -1,14 +1,15 @@
 import numpy as np
 import os
 
-class SimulationUtilsMesh():
+
+class SimulationUtilsMesh:
     """
     Utility functions related to simulation mesh parameters
     """
 
     # TODO: Consider if it better to move this to a new class file specific to
     # `flslnk` related methods.
-    def generate_mesh_x_y_z(self, npz_dir_path = "flslnk_npz"):
+    def generate_mesh_x_y_z(self, npz_dir_path="flslnk_npz"):
         """
         Generates a `.npz` file with `x`, `y`, and `z` keys and values
         indicating the equivalent distance of each voxel (tick) in cm.

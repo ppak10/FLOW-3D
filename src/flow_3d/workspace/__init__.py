@@ -11,6 +11,7 @@ from .simulation.view import WorkspaceSimulationView
 from .simulation.visualize import WorkspaceSimulationVisualize
 from .utils import WorkspaceUtils
 
+
 class Workspace(
     WorkspaceBase,
     WorkspaceHuggingFace,
@@ -26,17 +27,17 @@ class Workspace(
     WorkspaceUtils,
 ):
     def __init__(
-            self,
-            name: str = None,
-            filename: str = None,
-            workspace_path: str = None,
-            verbose = False,
-            **kwargs,
-        ):
+        self,
+        name: str = None,
+        filename: str = None,
+        workspace_path: str = None,
+        verbose=False,
+        **kwargs,
+    ):
         super().__init__(
-            name = name,
-            filename = filename,
-            verbose = verbose,
-            workspace_path = workspace_path,
+            name=name,
+            filename=filename,
+            verbose=verbose,
+            workspace_path=workspace_path,
             **kwargs,
         )

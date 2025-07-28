@@ -3,13 +3,14 @@ import subprocess
 
 from flow_3d.simulation.utils.decorators import SimulationUtilsDecorators
 
-class SimulationRun():
+
+class SimulationRun:
     """
     Run methods file for simulation class.
     """
 
     @SimulationUtilsDecorators.change_working_directory
-    def runhyd(self, delete_output = True, zip_output = True, **kwargs):
+    def runhyd(self, delete_output=True, zip_output=True, **kwargs):
         """
         Open `runhyd` subprocess and zip output
 
@@ -34,7 +35,7 @@ class SimulationRun():
                     ["runhyd", self.filename],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    text=True
+                    text=True,
                 )
 
                 for line in process.stdout:

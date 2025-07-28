@@ -13,18 +13,15 @@ from tqdm import tqdm
 
 from flow_3d.simulation.utils.decorators import SimulationUtilsDecorators
 
-class SimulationPostProcessing():
+
+class SimulationPostProcessing:
     """
     Run methods file for simulation class.
     """
 
     @SimulationUtilsDecorators.change_working_directory
     def guipost(
-        self,
-        delete_output = True,
-        delete_source = True,
-        zip_output = True,
-        **kwargs
+        self, delete_output=True, delete_source=True, zip_output=True, **kwargs
     ):
         """
         Creates and zips `flslnk.tmp` file.
@@ -44,10 +41,14 @@ class SimulationPostProcessing():
             flsinp = f.read()
 
             if self.verbose:
-                print(textwrap(f"""
+                print(
+                    textwrap(
+                        f"""
                 flsinp.simulation file content:
                 {flsinp}
-                """))
+                """
+                    )
+                )
 
             # TODO: Implement more options for flsinp
             with open("flsinp.simulation", "w") as f:
@@ -59,11 +60,11 @@ class SimulationPostProcessing():
         if not os.path.exists("flsgrf.simulation"):
             self.unzip_file("flsgrf.zip", "flsgrf.simulation")
 
-        # Run subprocess for creating flslnk.tmp file. 
+        # Run subprocess for creating flslnk.tmp file.
         print("Creating `flslnk.tmp` file...")
         process = subprocess.run(
             ["guipost", "-3", "flsgrf.simulation", "flsinp.simulation"],
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
         )
 
         # Log returncode to txt file
@@ -90,18 +91,17 @@ class SimulationPostProcessing():
     @SimulationUtilsDecorators.change_working_directory
     def chunk_flslnk(
         self,
-        chunk_dir_path = "flslnk_chunks",
-        delete_output = True,
-        delete_source = True,
-        zip_output = True,
+        chunk_dir_path="flslnk_chunks",
+        delete_output=True,
+        delete_source=True,
+        zip_output=True,
         **kwargs,
     ):
-
 
         # Create directory for chunks
         if not os.path.exists(chunk_dir_path):
             os.makedirs(chunk_dir_path)
-        
+
         chunk = []
         chunk_index = 0
 
@@ -133,7 +133,7 @@ class SimulationPostProcessing():
             if chunk:
                 output_file = f"{chunk_index}.txt".zfill(chunk_zfill)
                 output_path = os.path.join(chunk_dir_path, output_file)
-                with open(output_path, 'w') as out_f:
+                with open(output_path, "w") as out_f:
                     out_f.writelines(chunk)
 
         if zip_output:
@@ -149,26 +149,26 @@ class SimulationPostProcessing():
             os.remove("flslnk.tmp")
 
         return self
-    
+
     # TODO: Does not necessary need to change working directory.
     # TODO: Make method that does this multiprocessing per chunk rather than by
     # simulation
     @SimulationUtilsDecorators.change_working_directory
     def flslnk_chunk_to_npz(
         self,
-        chunk_dir_path = "flslnk_chunks",
-        npz_dir_path = "flslnk_npz",
-        delete_output = True,
-        delete_source = True,
-        zip_output = True,
-        num_proc = 1,
+        chunk_dir_path="flslnk_chunks",
+        npz_dir_path="flslnk_npz",
+        delete_output=True,
+        delete_source=True,
+        zip_output=True,
+        num_proc=1,
         **kwargs,
     ):
         # Unzip chunks
         self.unzip_folder(f"{chunk_dir_path}.zip", chunk_dir_path)
 
         # Create folder for npz files
-        # npz_dir_path = os.path.join(self.job_dir_path, simulation.name, "npz") 
+        # npz_dir_path = os.path.join(self.job_dir_path, simulation.name, "npz")
         if not os.path.exists(npz_dir_path):
             os.makedirs(npz_dir_path)
 
@@ -185,15 +185,15 @@ class SimulationPostProcessing():
 
                     pool.apply_async(
                         self.process_chunk_file,
-                        kwds = {
+                        kwds={
                             **kwargs,
                             "chunk_dir_path": chunk_dir_path,
                             "chunk_file": chunk_file,
-                        }
+                        },
                     )
                 pool.close()
                 pool.join()
-                
+
         else:
             for chunk_file in tqdm(chunk_data_listdir):
                 # Pulls column headers from the 9th line in each file
@@ -258,30 +258,32 @@ class SimulationPostProcessing():
         if delete_output:
             print(f"Deleting `{npz_dir_path}` output folder")
             shutil.rmtree(npz_dir_path)
-        
+
         return self
-    
+
     def process_chunk_file(self, chunk_file_path, npz_file_path):
         keys = {
-            'p': 'pressure',
-            'tn':"temperature",
-            'f' : "fraction_of_fluid",
-            'rho':"density",
-            'scl4':"melt_region",
-            'scl5':"temperature_gradient",
-            'scl6':'dtdx',
-            'scl7':'dtdy',
-            'scl8':'dtdz',
-            'u':'vx',
-            'v':'vy',
-            'w':'vz',
-            'nfs': 'liquid_label'
+            "p": "pressure",
+            "tn": "temperature",
+            "f": "fraction_of_fluid",
+            "rho": "density",
+            "scl4": "melt_region",
+            "scl5": "temperature_gradient",
+            "scl6": "dtdx",
+            "scl7": "dtdy",
+            "scl8": "dtdz",
+            "u": "vx",
+            "v": "vy",
+            "w": "vz",
+            "nfs": "liquid_label",
         }
 
         # Parses header text in values.
-        #  printing tn, scl4 and nfs       t=5.52563142E-06  ix=2 to  127   jy=2 to  32  kz=2 to  33 
+        #  printing tn, scl4 and nfs       t=5.52563142E-06  ix=2 to  127   jy=2 to  32  kz=2 to  33
         # 2        2      5.526E-06      5.526E-06        2      127        2       32        2       33
-        metadata_df = pd.read_csv(chunk_file_path, skiprows=2, nrows=1, sep=r"\s+", header=None)
+        metadata_df = pd.read_csv(
+            chunk_file_path, skiprows=2, nrows=1, sep=r"\s+", header=None
+        )
         t_series = metadata_df.iloc[:, 3]
         t = float(t_series.iloc[0])
 
@@ -317,7 +319,14 @@ class SimulationPostProcessing():
         vx_vy_vz_z = []
         vx_vy_vz_y = []
 
-        keys = ["pressure", "temperature", "melt_region", "temperature_gradient", "liquid_label", "fraction_of_fluid"]
+        keys = [
+            "pressure",
+            "temperature",
+            "melt_region",
+            "temperature_gradient",
+            "liquid_label",
+            "fraction_of_fluid",
+        ]
 
         values = {
             "timestep": [],
@@ -392,8 +401,7 @@ class SimulationPostProcessing():
             key_values[key]["y"].append(row[key])
             key_values[key]["z"].append(key_values[key]["y"])
 
-
-        timestep = {} 
+        timestep = {}
         for key in keys:
             timestep[key] = [np.array(key_values[key]["timestep"])]
 

@@ -16,6 +16,5 @@ def register_version(app: typer.Typer):
                 "⚠️  [yellow]FLOW-3D version unknown (package not installed)[/yellow]"
             )
             raise typer.Exit()
+
     return version
-
-

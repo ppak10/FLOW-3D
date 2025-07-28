@@ -9,39 +9,32 @@ from flow_3d.simulation.utils.decorators import SimulationUtilsDecorators
 
 # TODO: Handle with class (maybe parameters)
 COLUMNS_CONFIG = {
-    "pressure": {
-        "cmap": "viridis",
-        "clim": [0, 10000],
-        "title": "Pressure"
-    },
+    "pressure": {"cmap": "viridis", "clim": [0, 10000], "title": "Pressure"},
     "temperature": {
         "cmap": "plasma",
         # "clim": [1873, 5000], # Ti-6Al-4V
-        "clim":[1697, 3000], # SS316L
-        "title": "Temperature"
+        "clim": [1697, 3000],  # SS316L
+        "title": "Temperature",
     },
     "fraction_of_fluid": {
         "cmap": "viridis",
         "clim": [0, 1],
-        "title": "Fraction of Fluid"
+        "title": "Fraction of Fluid",
     },
-    "liquid_label": {
-        "cmap": "viridis",
-        "clim": [0, 100],
-        "title": "Liquid Label"
-    },
+    "liquid_label": {"cmap": "viridis", "clim": [0, 100], "title": "Liquid Label"},
 }
 
-class SimulationMeasurements():
+
+class SimulationMeasurements:
     """
     Methods for obtaining simulation measurements
     """
 
-    @SimulationUtilsDecorators.change_working_directory 
+    @SimulationUtilsDecorators.change_working_directory
     def prepare_melt_pool_measurements(
         self,
-        npz_dir_path = "flslnk_npz",
-        regenerate_mesh_x_y_z = False,
+        npz_dir_path="flslnk_npz",
+        regenerate_mesh_x_y_z=False,
         **kwargs,
     ):
         """
@@ -77,28 +70,29 @@ class SimulationMeasurements():
 
         # Check if `mesh_x_y_z.npz exists` and create if not existant
         if not os.path.exists(f"mesh_x_y_z.npz") or regenerate_mesh_x_y_z:
-            self.generate_mesh_x_y_z(npz_dir_path = npz_dir_path)
+            self.generate_mesh_x_y_z(npz_dir_path=npz_dir_path)
 
-    @SimulationUtilsDecorators.change_working_directory 
+    @SimulationUtilsDecorators.change_working_directory
     def generate_melt_pool_measurements(
         self,
-        npz_dir_path = "flslnk_npz",
-        num_proc = 1,
+        npz_dir_path="flslnk_npz",
+        num_proc=1,
         **kwargs,
     ):
         """
         Provides depth, width, and length measurements of melt pool based on
         output ("pressure", "temperature", "fraction_of_fluid") threshold.
         """
-        print(f"""\n
+        print(
+            f"""\n
 ################################################################################
 Measurements: `{self.name}`
 ################################################################################
-""")
+"""
+        )
         # #TODO: Add checks
         # if num_proc > 1:
         #     with multiprocessing.Pool(processes=num_proc) as pool:
-
 
         #         for index, npz_file in tqdm(enumerate(sorted(os.listdir(npz_dir_path)))):
         #             npz_data = np.load(f"{npz_dir_path}/{npz_file}")
@@ -113,9 +107,9 @@ Measurements: `{self.name}`
 
         # else:
 
-        self.generate_melt_pool_dimensions(npz_dir_path = npz_dir_path)
+        self.generate_melt_pool_dimensions(npz_dir_path=npz_dir_path)
 
-    def generate_melt_pool_dimensions(self, npz_dir_path = "flslnk_npz"):
+    def generate_melt_pool_dimensions(self, npz_dir_path="flslnk_npz"):
         """
         Provides depth, width, and length measurements of melt pool based on
         output ("pressure", "temperature", "fraction_of_fluid") threshold.
@@ -141,12 +135,11 @@ Measurements: `{self.name}`
                     thresholded_data_unique = np.unique(thresholded_data)
 
                     if len(thresholded_data_unique) > 1:
-                        
+
                         data_dict = {
                             "timestep": timestep,
                             "beam_diameter": self.beam_diameter,
                             "mesh_size": self.mesh_size,
-
                             # Change to `self.material` when implemented
                             "material": self.template_id,
                             "power": power,
@@ -170,11 +163,15 @@ Measurements: `{self.name}`
 
                         # `0` is xy plane `1` is xz plane
                         for axis in [0, 1]:
-                        
+
                             # Sum data along axis and apply threshold and transformations
-                            thresholded_data_sum = np.sum(thresholded_data, axis = axis)
-                            thresholded_data_sum = np.where(thresholded_data_sum > 0, 1, 0)
-                            thresholded_data_sum = np.flip(thresholded_data_sum, axis=(0, 1))
+                            thresholded_data_sum = np.sum(thresholded_data, axis=axis)
+                            thresholded_data_sum = np.where(
+                                thresholded_data_sum > 0, 1, 0
+                            )
+                            thresholded_data_sum = np.flip(
+                                thresholded_data_sum, axis=(0, 1)
+                            )
 
                             # Measure and label blob regions
                             labels_all = measure.label(thresholded_data_sum)
@@ -190,7 +187,9 @@ Measurements: `{self.name}`
                             blob_max = regionprops[blob_max_area_index]
 
                             # Remove other smaller blobs
-                            labels_max_blob = np.where(labels_all == blob_max.label, 1, 0)
+                            labels_max_blob = np.where(
+                                labels_all == blob_max.label, 1, 0
+                            )
 
                             # Get the bounding box of the largest blob
                             min_row, min_col, max_row, max_col = blob_max.bbox
@@ -203,7 +202,12 @@ Measurements: `{self.name}`
                                 data_dict["length_m"] = bbox_width * self.mesh_size
                                 data_dict["length_px"] = bbox_width
 
-                                skimage_dict["bbox_xy"] = (min_row, min_col, max_row, max_col)
+                                skimage_dict["bbox_xy"] = (
+                                    min_row,
+                                    min_col,
+                                    max_row,
+                                    max_col,
+                                )
                                 skimage_dict["labels_all_xy"] = labels_all
                                 skimage_dict["labels_max_blob_xy"] = labels_max_blob
 
@@ -211,14 +215,19 @@ Measurements: `{self.name}`
                                 data_dict["depth_m"] = bbox_height * self.mesh_size
                                 data_dict["depth_px"] = bbox_height
 
-                                skimage_dict["bbox_xz"] = (min_row, min_col, max_row, max_col)
+                                skimage_dict["bbox_xz"] = (
+                                    min_row,
+                                    min_col,
+                                    max_row,
+                                    max_col,
+                                )
                                 skimage_dict["labels_all_xz"] = labels_all
                                 skimage_dict["labels_max_blob_xz"] = labels_max_blob
 
                         data_rows.append(data_dict)
                         np.savez_compressed(
                             f"measurements/melt_pool/{key}/{timestep}.npz",
-                            **skimage_dict
+                            **skimage_dict,
                         )
 
             dimensions_df = pd.DataFrame(data_rows)

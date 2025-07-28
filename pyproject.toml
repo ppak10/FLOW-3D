@@ -1,11 +1,7 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
-name = "flow-3d"
+name = "FLOW-3D"
 dynamic = ["version"] 
-description = "Python wrapper for FLOW-3D"
+description = "Python wrapper for FLOW-3D Version 12.0 Update 2"
 readme = "README.md"
 authors = [
   { name="Peter Pak", email="ppak10@gmail.com" },
@@ -31,18 +27,19 @@ dependencies = [
 Homepage = "https://github.com/ppak10/FLOW-3D"
 Issues = "https://github.com/ppak10/FLOW-3D/issues"
 
-[project.scripts]
-flow-3d = "flow_3d.manage:main"
-
 [project.optional-dependencies]
 dev = [
     "black>=25.1.0",
     "pytest>=8.4.0",
 ]
+mcp = [
+    "mcp>=1.12.2",
+]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/flow_3d"]
+[project.scripts]
+flow_3d = "flow_3d.cli:app"
 
-[tool.hatch.version]
-path = "src/flow_3d/__init__.py"
+[tool.black]
+line-length = 88
+target-version = ["py310"]
 

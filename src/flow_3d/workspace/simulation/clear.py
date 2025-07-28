@@ -1,17 +1,18 @@
 import os
 import shutil
 
+
 class WorkspaceSimulationClear:
     """
     Workspace class clearing files in simulation folder for say a failed run.
     """
 
     def simulation_clear(
-            self,
-            name,
-            keep_files=['simulation.yml', 'simulation.pkl', 'prepin.simulation'],
-            **kwargs
-        ):
+        self,
+        name,
+        keep_files=["simulation.yml", "simulation.pkl", "prepin.simulation"],
+        **kwargs,
+    ):
         """
         Clears everything in a simulation folder except for:
         - simulation.yml

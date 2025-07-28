@@ -12,41 +12,34 @@ from flow_3d.simulation.utils.decorators import SimulationUtilsDecorators
 
 # TODO: Handle with class (maybe parameters)
 COLUMNS_CONFIG = {
-    "pressure": {
-        "cmap": "viridis",
-        "clim": [0, 10000],
-        "title": "Pressure"
-    },
+    "pressure": {"cmap": "viridis", "clim": [0, 10000], "title": "Pressure"},
     "temperature": {
         "cmap": "plasma",
         # "clim": [1873, 5000], # Ti-6Al-4V
         # "clim":[1697, 3000], # SS316L
         # "clim":[1000, 3000], # SS316L
-        "clim":[300, 3000], # SS316L
-        "title": "Temperature"
+        "clim": [300, 3000],  # SS316L
+        "title": "Temperature",
     },
     "fraction_of_fluid": {
         "cmap": "viridis",
         "clim": [0, 1],
-        "title": "Fraction of Fluid"
+        "title": "Fraction of Fluid",
     },
-    "liquid_label": {
-        "cmap": "viridis",
-        "clim": [0, 100],
-        "title": "Liquid Label"
-    },
+    "liquid_label": {"cmap": "viridis", "clim": [0, 100], "title": "Liquid Label"},
 }
 
-class SimulationVisualizations():
+
+class SimulationVisualizations:
 
     # TODO: Make into decorator
-    @SimulationUtilsDecorators.change_working_directory 
+    @SimulationUtilsDecorators.change_working_directory
     def prepare_view_visualizations(
         self,
-        views = ["isometric", "cross_section_xy", "cross_section_xz", "cross_section_yz"],
-        npz_dir_path = "flslnk_npz",
-        regenerate_mesh_x_y_z = False,
-        **kwargs
+        views=["isometric", "cross_section_xy", "cross_section_xz", "cross_section_yz"],
+        npz_dir_path="flslnk_npz",
+        regenerate_mesh_x_y_z=False,
+        **kwargs,
     ):
         """
         Initialize view folders, unzip npz folder, and create `mesh_x_y_z` file.
@@ -74,22 +67,24 @@ class SimulationVisualizations():
 
         # Check if `mesh_x_y_z.npz exists` and create if not existant
         if not os.path.exists(f"mesh_x_y_z.npz") or regenerate_mesh_x_y_z:
-            self.generate_mesh_x_y_z(npz_dir_path = npz_dir_path)
+            self.generate_mesh_x_y_z(npz_dir_path=npz_dir_path)
 
     # TODO: Consider renaming this to `generate_view_visualizations`.
-    @SimulationUtilsDecorators.change_working_directory 
+    @SimulationUtilsDecorators.change_working_directory
     def generate_views_visualizations(
         self,
-        views = ["isometric", "cross_section_xy", "cross_section_xz", "cross_section_yz"],
-        npz_dir_path = "flslnk_npz",
-        num_proc = 1,
-        **kwargs
+        views=["isometric", "cross_section_xy", "cross_section_xz", "cross_section_yz"],
+        npz_dir_path="flslnk_npz",
+        num_proc=1,
+        **kwargs,
     ):
-        print(f"""\n
+        print(
+            f"""\n
 ################################################################################
 Visualize Views: `{self.name}`
 ################################################################################
-""")
+"""
+        )
         for view in views:
 
             # View method for visualization.
@@ -98,12 +93,13 @@ Visualize Views: `{self.name}`
             else:
                 view_method = getattr(self, f"view_visualization_isometric")
 
-            #TODO: Add checks
+            # TODO: Add checks
             if num_proc > 1:
                 with multiprocessing.Pool(processes=num_proc) as pool:
 
-
-                    for index, npz_file in tqdm(enumerate(sorted(os.listdir(npz_dir_path)))):
+                    for index, npz_file in tqdm(
+                        enumerate(sorted(os.listdir(npz_dir_path)))
+                    ):
                         npz_data = np.load(f"{npz_dir_path}/{npz_file}")
                         example = {key: npz_data[key] for key in npz_data.keys()}
                         pool.apply_async(
@@ -115,7 +111,9 @@ Visualize Views: `{self.name}`
                     pool.join()
 
             else:
-                for index, npz_file in tqdm(enumerate(sorted(os.listdir(npz_dir_path)))):
+                for index, npz_file in tqdm(
+                    enumerate(sorted(os.listdir(npz_dir_path)))
+                ):
                     npz_data = np.load(f"{npz_dir_path}/{npz_file}")
                     example = {key: npz_data[key] for key in npz_data.keys()}
                     view_method(view, example, index)
@@ -136,9 +134,11 @@ Visualize Views: `{self.name}`
                         image = imageio.imread(f"{column_folder_path}/{image_file}")
                         frames.append(image)
 
-                    # Only compile .gif for folders with images. 
+                    # Only compile .gif for folders with images.
                     if len(frames) > 0:
-                        imageio.mimsave(f"{view_folder}/{column_folder}.gif", frames, fps = 10, loop = 0)
+                        imageio.mimsave(
+                            f"{view_folder}/{column_folder}.gif", frames, fps=10, loop=0
+                        )
 
     # TODO: Include more information in visualization
     # TODO: Make colorbar consistent throughout frames.
@@ -170,7 +170,9 @@ Visualize Views: `{self.name}`
 
                 # Prepare the grid data for plotting
                 values = np.array(example[key][0])
-                mesh = np.transpose(values, (2, 1, 0))  # Transpose to match voxel orientation
+                mesh = np.transpose(
+                    values, (2, 1, 0)
+                )  # Transpose to match voxel orientation
 
                 index_string = f"{index}".zfill(4)
 
@@ -180,22 +182,23 @@ Visualize Views: `{self.name}`
                     data = view_data["data"]
 
                     threshold = configs["clim"][0]
-                    voxels = data > threshold  # Apply threshold to create a binary voxel structure
-
+                    voxels = (
+                        data > threshold
+                    )  # Apply threshold to create a binary voxel structure
 
                     norm = Normalize(vmin=configs["clim"][0], vmax=configs["clim"][1])
                     cmap = get_cmap(configs["cmap"])
 
                     normalized_colors = cmap(norm(mesh))
-        
+
                     # Plot using Matplotlib's voxels
                     fig = plt.figure(figsize=(10, 10))
-                    ax = fig.add_subplot(projection='3d')
+                    ax = fig.add_subplot(projection="3d")
                     ax.voxels(
                         voxels,
                         facecolors=normalized_colors,
                         edgecolors=np.clip(2 * normalized_colors - 0.5, 0, 1),
-                        linewidth=0.5
+                        linewidth=0.5,
                     )
 
                     x_dim, y_dim, z_dim = voxels.shape  # Dimensions of the voxel grid
@@ -209,15 +212,16 @@ Visualize Views: `{self.name}`
                     ax.set_yticks(np.arange(0, y_dim + 1, 10))
                     ax.set_zticks(np.arange(0, z_dim + 1, 10))
 
-                    ax.set(xlabel='X', ylabel='Y', zlabel='Z')
+                    ax.set(xlabel="X", ylabel="Y", zlabel="Z")
                     ax.set_title(title)
-
 
                     # Calculate the maximum extent for equal aspect ratio
                     max_extent = max(x_dim, y_dim, z_dim)
 
                     # Center and scale each axis to have equal aspect ratio
-                    ax.set_box_aspect((x_dim / max_extent, y_dim / max_extent, z_dim / max_extent))
+                    ax.set_box_aspect(
+                        (x_dim / max_extent, y_dim / max_extent, z_dim / max_extent)
+                    )
                     # ax.set_aspect('auto')
 
                     # Add color bar

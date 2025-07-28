@@ -1,6 +1,7 @@
 import os
 import pickle
 
+
 class WorkspaceSimulationBuild:
     """
     Workspace class providing methods for initializing simulation folders and
@@ -21,14 +22,18 @@ class WorkspaceSimulationBuild:
 
         # Creates prepin file inside simulation job folder
         simulation_prepin_filename = f"prepin.{simulation.filename}"
-        simulation_prepin_path = os.path.join(simulation_path, simulation_prepin_filename)
+        simulation_prepin_path = os.path.join(
+            simulation_path, simulation_prepin_filename
+        )
 
         # Write prepin file as "prepin.simulation"
         with open(simulation_prepin_path, "w") as file:
             file.write(simulation.prepin_file_content)
 
         # Save simulation class object to pickle file
-        simulation_pkl_path = os.path.join(simulation_path, f"{simulation.filename}.pkl")
+        simulation_pkl_path = os.path.join(
+            simulation_path, f"{simulation.filename}.pkl"
+        )
         with open(simulation_pkl_path, "wb") as file:
             pickle.dump(simulation, file)
 

@@ -7,26 +7,28 @@ from importlib.resources import files
 
 from flow_3d import data
 
+
 class WorkspaceBase:
     """
     Workspace methods that do not rely on other classes.
     """
+
     def __init__(
-            self,
-            name: str = None,
-            filename: str = None,
-            workspace_path = None,
-            verbose = False,
-            **kwargs,
-        ):
+        self,
+        name: str = None,
+        filename: str = None,
+        workspace_path=None,
+        verbose=False,
+        **kwargs,
+    ):
         self.set_name(name, filename)
 
         self.workspace_path = workspace_path
         self.verbose = verbose
 
         super().__init__(**kwargs)
-    
-    def set_name(self, name = None, filename = None):
+
+    def set_name(self, name=None, filename=None):
         """
         Sets the `name` and `filename` values of the class.
 
@@ -52,17 +54,19 @@ class WorkspaceBase:
 
         @param portfolio_dir: Portfolio directory
         """
-            
+
         self.workspace_path = os.path.join(portfolio_path, self.filename)
 
         # Creates workspace folder directory in portfolio directory.
         if not os.path.isdir(self.workspace_path):
             os.makedirs(self.workspace_path)
         else:
-            warning = textwrap.dedent(f"""
+            warning = textwrap.dedent(
+                f"""
             Folder for job `{self.filename}` already exists.
             Following operations may overwrite existing files within folder.
-            """)
+            """
+            )
             print(warning)
 
         # Copy over `manage.py` file to created workspace.
@@ -78,5 +82,5 @@ class WorkspaceBase:
         # TODO: Generate workspace .xml
 
         return self.workspace_path
-    
+
     workspace_init = workspace_initialize

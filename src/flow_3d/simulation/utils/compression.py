@@ -3,7 +3,8 @@ import zipfile
 
 from tqdm import tqdm
 
-class SimulationUtilsCompression():
+
+class SimulationUtilsCompression:
     """
     Compression methods used within simulation class.
     """
@@ -42,7 +43,7 @@ class SimulationUtilsCompression():
             # matching_files = [name for name in file_names if name == "flsgrf.simulation"]
 
             # Open the destination file once and append each matching file's contents to it
-            with open(destination, 'wb') as dest_file:
+            with open(destination, "wb") as dest_file:
                 for file_name in tqdm(file_names):
                     # Get the uncompressed file size for progress tracking
                     uncompressed_size = zip_ref.getinfo(file_name).file_size

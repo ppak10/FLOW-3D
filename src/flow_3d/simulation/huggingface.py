@@ -11,20 +11,21 @@ from flow_3d.simulation.utils.decorators import SimulationUtilsDecorators
 
 hf_api = HfApi()
 
-class SimulationHuggingFace():
+
+class SimulationHuggingFace:
     """
     Runs methods for huggingface related calls
     """
 
-    @SimulationUtilsDecorators.change_working_directory 
+    @SimulationUtilsDecorators.change_working_directory
     def create_flslnk_dataset(
         self,
-        npz_dir_path = "flslnk_npz",
-        dataset_path = "flslnk_dataset",
-        delete_output = True,
-        delete_source = True,
-        zip_output = True,
-        **kwargs
+        npz_dir_path="flslnk_npz",
+        dataset_path="flslnk_dataset",
+        delete_output=True,
+        delete_source=True,
+        zip_output=True,
+        **kwargs,
     ):
         # Unzip npz files
         if not os.path.exists(npz_dir_path):
@@ -67,22 +68,19 @@ class SimulationHuggingFace():
             shutil.rmtree(dataset_path)
 
         return dataset
-    
-    @SimulationUtilsDecorators.change_working_directory 
+
+    @SimulationUtilsDecorators.change_working_directory
     def upload_flslnk_dataset(
         self,
-
         # `dataset.push_to_hub`
         dataset_id,
-        config_name = None,
-        split = None,
-
+        config_name=None,
+        split=None,
         # `load_from_disk`
-        dataset_path = "flslnk_dataset",
-        keep_in_memory = None,
-
-        delete_source = True,
-        **kwargs
+        dataset_path="flslnk_dataset",
+        keep_in_memory=None,
+        delete_source=True,
+        **kwargs,
     ):
         # Unzip dataset files
         if not os.path.exists(dataset_path):
@@ -105,9 +103,9 @@ class SimulationHuggingFace():
         data_dir = os.path.join("data", config_name)
         response = dataset.push_to_hub(
             dataset_id,
-            data_dir = data_dir,
-            config_name = config_name,
-            split = split,
+            data_dir=data_dir,
+            config_name=config_name,
+            split=split,
         )
 
         if delete_source:
