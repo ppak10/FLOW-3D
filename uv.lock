@@ -560,7 +560,7 @@ wheels = [
 
 [[package]]
 name = "flow-3d"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "datasets" },
     { name = "f90nml" },
